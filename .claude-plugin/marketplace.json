@@ -19,10 +19,7 @@
       "license": "MIT",
       "keywords": ["writing", "prose", "editing", "ai-detection", "storyscope", "humanize"],
       "category": "writing",
-      "strict": false,
-      "commands": ["./commands/humanize.md"],
-      "agents": [],
-      "skills": ["./skills/humanize"]
+      "strict": true
     }
   ]
 }

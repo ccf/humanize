@@ -84,3 +84,24 @@ def test_main_reads_file(tmp_path, capsys):
     p.write_text("A b c. D e.")
     ss.main([str(p)])
     assert json.loads(capsys.readouterr().out)["words"] == 5
+
+
+def test_words_keeps_curly_apostrophe_inside_token():
+    # Uses U+2019 (right single quotation mark)
+    curly_apos = chr(0x2019)
+    text = f"It{curly_apos}s a fact."
+    expected = [f"It{curly_apos}s", "a", "fact"]
+    assert ss.words(text) == expected
+
+
+def test_split_sentences_handles_curly_closing_quotes():
+    # Uses U+201C (left double quotation mark) and U+201D (right double quotation mark)
+    left_dq = chr(0x201C)
+    right_dq = chr(0x201D)
+    text = f'{left_dq}Go home," she said. {left_dq}Now.{right_dq} He went.{right_dq}'
+    expected = [
+        f'{left_dq}Go home," she said.',
+        f'{left_dq}Now.{right_dq}',
+        f'He went.{right_dq}'
+    ]
+    assert ss.split_sentences(text) == expected

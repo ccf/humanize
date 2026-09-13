@@ -13,9 +13,9 @@ ABBREVIATIONS = {
     "fig", "inc", "ltd", "co", "u.s", "a.m", "p.m", "approx", "dept", "est",
 }
 
-_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:[''-][A-Za-z0-9]+)*")
+_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*")
 _PARA_SPLIT_RE = re.compile(r"\n\s*\n")
-_SENT_END_RE = re.compile(r"[.!?]+[\"'"')\]]*(?=\s+[\"'"'(\[]*[A-Z0-9])")
+_SENT_END_RE = re.compile(r"[.!?]+[\"'”’)\]]*(?=\s+[\"'“‘(\[]*[A-Z0-9])")
 
 
 def words(text: str) -> list[str]:
@@ -33,7 +33,7 @@ def split_sentences(text: str) -> list[str]:
         start = 0
         for m in _SENT_END_RE.finditer(flat):
             prev = re.search(r"(\S+)$", flat[start:m.start()])
-            tok = prev.group(1).lower().strip("\"'""''()[]") if prev else ""
+            tok = prev.group(1).lower().strip("\"'“”‘’()[]") if prev else ""
             is_period = m.group(0)[0] == "."
             if is_period and (tok in ABBREVIATIONS or (len(tok) == 1 and tok.isalpha())):
                 continue

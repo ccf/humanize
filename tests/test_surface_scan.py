@@ -382,6 +382,11 @@ def test_strip_markdown_removes_code_links_headings_and_urls():
     assert r["punct"]["counts"]["colon"] == 0
 
 
+def test_strip_markdown_keeps_comparison_operators():
+    assert ss.strip_markdown("a < b > c and x <= y and <3") == "a < b > c and x <= y and <3"
+    assert ss.strip_markdown("bold <b>text</b> here<br/>") == "bold text here"
+
+
 def test_double_dash_em_dash_excludes_cli_flags():
     r = ss.punctuation("Use the --audit-only flag and the --fiction flag.", 100)
     assert r["counts"]["em_dash"] == 0

@@ -43,7 +43,7 @@ _INLINE_CODE_RE = re.compile(r"`[^`]*`")
 _ATX_HEADING_RE = re.compile(r"^#{1,6}\s+", re.M)
 _MD_LINK_RE = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
 _BARE_URL_RE = re.compile(r"https?://\S+")
-_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_HTML_TAG_RE = re.compile(r"</?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*?)?/?>")
 
 
 def strip_markdown(text: str) -> str:

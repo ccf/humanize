@@ -201,3 +201,37 @@ def test_analyze_includes_punct_structures_openers():
     }
     assert r["punct"]["em_dash"] > 0
     assert 0 < r["openers"]["distinct_ratio"] <= 1
+
+
+def test_phrase_hits_is_case_insensitive_word_bounded_and_positioned():
+    s = ["We Leverage tools.", "Leveraging is fine; cleverage is not.", "Let's delve in."]
+    hits = ss.phrase_hits(s, ["leverage", "delve", "seamless"])
+    assert hits == [
+        {"term": "delve", "count": 1, "positions": [2]},
+        {"term": "leverage", "count": 1, "positions": [0]},
+    ]
+
+
+def test_phrase_hits_multiword_and_apostrophe_terms():
+    s = ["It's worth noting that it's a testament to grit.", "Don't hesitate to reach out."]
+    hits = ss.phrase_hits(s, ["it's worth noting", "testament to", "don't hesitate", "reach out"])
+    assert [h["term"] for h in hits] == [
+        "don't hesitate",
+        "it's worth noting",
+        "reach out",
+        "testament to",
+    ]
+
+
+def test_wordlists_are_lowercase_and_deduplicated():
+    for lst in (ss.AI_WORDLIST, ss.HEDGES, ss.INTENSIFIERS):
+        assert lst == sorted(set(lst)) and all(t == t.lower() for t in lst)
+
+
+def test_analyze_wordlist_hedges_intensifiers_rates():
+    text = "We leverage a robust, seamless platform. Perhaps it is truly very good."  # 12 words
+    r = ss.analyze(text)
+    assert r["wordlist"]["rate"] == ss.per_1k(3, r["words"])
+    assert {h["term"] for h in r["wordlist"]["hits"]} == {"leverage", "robust", "seamless"}
+    assert r["hedges"]["rate"] == ss.per_1k(1, r["words"])
+    assert r["intensifiers"]["rate"] == ss.per_1k(2, r["words"])

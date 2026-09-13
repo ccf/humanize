@@ -153,10 +153,143 @@ def opener_distinct_ratio(sentences: list[str]) -> float:
     return round(len(set(fws)) / len(fws), 3) if fws else 0.0
 
 
+AI_WORDLIST = sorted(
+    {
+        "a beacon of",
+        "a testament to",
+        "a wide range of",
+        "at the end of the day",
+        "bustling",
+        "comprehensive",
+        "crucial",
+        "cutting-edge",
+        "deep dive",
+        "delve",
+        "delves",
+        "delving",
+        "dive into",
+        "don't hesitate",
+        "elevate",
+        "embark",
+        "empower",
+        "empowers",
+        "ever-evolving",
+        "foster",
+        "fostering",
+        "fosters",
+        "furthermore",
+        "game-changer",
+        "great question",
+        "harness",
+        "holistic",
+        "i hope this helps",
+        "in conclusion",
+        "in today's fast-paced",
+        "intricate",
+        "it is worth noting",
+        "it's important to note",
+        "it's worth noting",
+        "landscape",
+        "leverage",
+        "leveraging",
+        "meticulous",
+        "meticulously",
+        "moreover",
+        "multifaceted",
+        "navigate the complexities",
+        "navigating the complexities",
+        "nuanced",
+        "paradigm",
+        "pivotal",
+        "plays a crucial role",
+        "reach out",
+        "realm",
+        "resonate",
+        "resonates",
+        "revolutionize",
+        "robust",
+        "seamless",
+        "seamlessly",
+        "shed light",
+        "streamline",
+        "synergy",
+        "tapestry",
+        "testament to",
+        "the world of",
+        "underscore",
+        "underscores",
+        "unlock",
+        "unwavering",
+        "vibrant",
+    }
+)
+HEDGES = sorted(
+    {
+        "arguably",
+        "generally",
+        "in a sense",
+        "it could be argued",
+        "it seems",
+        "likely",
+        "maybe",
+        "might",
+        "often",
+        "perhaps",
+        "potentially",
+        "somewhat",
+        "tend to",
+        "tends to",
+        "to some extent",
+        "typically",
+    }
+)
+INTENSIFIERS = sorted(
+    {
+        "absolutely",
+        "certainly",
+        "deeply",
+        "extremely",
+        "genuinely",
+        "highly",
+        "incredibly",
+        "profoundly",
+        "remarkably",
+        "significantly",
+        "truly",
+        "undeniably",
+        "undoubtedly",
+        "utterly",
+        "vastly",
+        "very",
+    }
+)
+
+
+def _term_re(term: str) -> re.Pattern:
+    return re.compile(r"(?<![\w'’])" + re.escape(term).replace("'", "['’]") + r"(?![\w'’-])", re.I)
+
+
+def phrase_hits(sentences: list[str], terms: list[str]) -> list[dict]:
+    hits = []
+    for term in terms:
+        rx = _term_re(term)
+        positions = [i for i, s in enumerate(sentences) if rx.search(s)]
+        if positions:
+            count = sum(len(rx.findall(s)) for s in sentences)
+            hits.append({"term": term, "count": count, "positions": positions})
+    hits.sort(key=lambda h: (-h["count"], h["term"]))
+    return hits
+
+
+def _rate_of(hits: list[dict], n_words: int) -> float:
+    return per_1k(sum(h["count"] for h in hits), n_words)
+
+
 def analyze(text: str) -> dict:
     paras = split_paragraphs(text)
     sents = split_sentences(text)
     n_words = len(words(text))
+    wl = phrase_hits(sents, AI_WORDLIST)
     return {
         "words": n_words,
         "sentences": len(sents),
@@ -171,6 +304,9 @@ def analyze(text: str) -> dict:
             "parallel_openers": parallel_opener_runs(sents),
         },
         "openers": {"distinct_ratio": opener_distinct_ratio(sents)},
+        "wordlist": {"hits": wl, "rate": _rate_of(wl, n_words)},
+        "hedges": {"rate": _rate_of(phrase_hits(sents, HEDGES), n_words)},
+        "intensifiers": {"rate": _rate_of(phrase_hits(sents, INTENSIFIERS), n_words)},
     }
 
 

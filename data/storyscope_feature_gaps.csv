@@ -1,0 +1,305 @@
+id,name,dim,type,human,ai,gap,detail,absgap
+REV_SUS_001,Global Withholding Intensity,revelation,ordinal,23.0,33.0,10.0,'low': human 23% vs AI 33%,10.0
+REV_SUS_002,Visibility of Withholding,revelation,categorical,39.0,30.0,-10.0,'implicit_omission_only': human 39% vs AI 30%,10.0
+REV_SUS_003,Resolution of Backward-Looking Mysteries,revelation,categorical,14.0,10.0,-5.0,'partially_resolved': human 14% vs AI 10%,5.0
+REV_SUS_004,Dominant Suspense Source,revelation,categorical,5.0,12.0,7.0,'moral_or_existential_choice': human 5% vs AI 12%,7.0
+REV_SUS_007,Pre-Threat Character Investment,revelation,scale,2.77,2.99,0.22,mean human 2.77 vs AI 2.99,0.22
+REV_SUS_008,Mystery Orientation,revelation,categorical,19.0,26.0,8.0,'none': human 19% vs AI 26%,8.0
+REV_SUS_009,Mystery Resolution Closure,revelation,binary,15.0,11.0,-4.0,'no': human 15% vs AI 11%,4.0
+REV_SUS_005,Reader Expectation Strategy,revelation,categorical,53.0,73.0,21.0,'sets_up_and_fulfills_expectations': human 53% vs AI 73%,21.0
+REV_SUR_003,Depth of Recontextualization After Surprise,revelation,scale,3.29,2.95,-0.34,mean human 3.29 vs AI 2.95,0.34
+REV_SUR_004,Predominant Reader–Character Knowledge Alignment,revelation,categorical,64.0,80.0,16.0,'reader_and_character_roughly_aligned': human 64% vs AI 80%,16.0
+REV_SUR_005,Reader-Superior Knowledge Extent,revelation,ordinal,82.0,92.0,9.0,'none_reader_aligned': human 82% vs AI 92%,9.0
+REV_SUR_006,Function of Dramatic Irony,revelation,multi_select,32.0,27.0,-5.0,'tragic_pathos': human 32% vs AI 27%,5.0
+REV_DIS_001,Overall Revelation Pacing Pattern,revelation,categorical,66.0,48.0,-18.0,'back_loaded_key_revelations_near_end': human 66% vs AI 48%,18.0
+REV_DIS_002,Granularity of Revelations,revelation,categorical,14.0,22.0,8.0,'mostly_many_small_incremental_reveals': human 14% vs AI 22%,8.0
+REV_DIS_003,Use of Nonlinear Framing for Delayed Disclosure,revelation,scale,1.96,1.68,-0.28,mean human 1.96 vs AI 1.68,0.28
+REV_DIS_006,Primary Epistemic Engine of Interest,revelation,categorical,63.0,53.0,-11.0,'backward_mystery_what_really_happened': human 63% vs AI 53%,11.0
+REV_DIS_007,Dominant Channels of Major Revelations,revelation,multi_select,75.0,82.0,7.0,'internal_monologue_or_memory': human 75% vs AI 82%,7.0
+REV_SUR_007,Twist Placement Pattern,revelation,categorical,61.0,45.0,-16.0,'climactic_end_twist': human 61% vs AI 45%,16.0
+REV_SUR_009,Twist Foreshadowing Degree,revelation,ordinal,13.0,7.0,-6.0,'minimally_foreshadowed': human 13% vs AI 7%,6.0
+REV_SUR_010,Use of Red Herrings,revelation,binary,67.0,84.0,18.0,'no': human 67% vs AI 84%,18.0
+REV_DIS_012,Primary Focus of Withheld Information,revelation,multi_select,81.0,73.0,-9.0,'causal_past_events_or_backstory': human 81% vs AI 73%,9.0
+REV_DIS_014,Resolution Explicitness of Core Questions,revelation,ordinal,84.0,88.0,4.0,'clear_and_explicit_answers_to_central_questions': human 84% vs AI 88%,4.0
+REV_DIS_016,Information Source Diversity,revelation,multi_select,75.0,83.0,8.0,'internal_monologue_free_indirect_style': human 75% vs AI 83%,8.0
+REV_DIS_017,Presence of Meta-Revelation,revelation,binary,4.0,3.0,-2.0,'yes': human 4% vs AI 3%,2.0
+REV_DIS_018,Character Knowledge Change Arc,revelation,scale,4.19,4.29,0.1,mean human 4.19 vs AI 4.29,0.1
+EVT_TYP_001,Event Density per Text Length,events,scale,3.22,3.07,-0.15,mean human 3.22 vs AI 3.07,0.15
+EVT_TYP_006,Dominant Focal Level of Events,events,categorical,5.0,7.0,2.0,'community_or_institutional_scale': human 5% vs AI 7%,2.0
+EVT_TYP_003,Local vs Global Event Orientation,events,categorical,33.0,41.0,8.0,'scene_based': human 33% vs AI 41%,8.0
+EVT_TYP_004,Event-type diversity,events,ordinal,51.0,45.0,-5.0,'high_diversity': human 51% vs AI 45%,5.0
+EVT_SCH_007,Escalation of stakes domain breadth,events,categorical,54.0,46.0,-9.0,'confined_to_single_domain': human 54% vs AI 46%,9.0
+EVT_TYP_008,Event-time coverage of the main arc,events,ordinal,48.0,54.0,5.0,'several_days_to_months': human 48% vs AI 54%,5.0
+EVT_SCH_004,Mode of resolution of the main event chain,events,categorical,27.0,47.0,20.0,'resolved_through_internal_understanding_or_acceptance': human 27% vs AI 47%,20.0
+EVT_SCH_002,Arc Completeness Relative to Implied Plot,events,ordinal,96.0,95.0,-2.0,'full_arc_to_local_resolution': human 96% vs AI 95%,2.0
+EVT_SCH_003,Strength of Event Escalation,events,scale,3.63,3.58,-0.05,mean human 3.63 vs AI 3.58,0.05
+EVT_SCH_006,Use of Explicit Frame Narrative,events,binary,77.0,85.0,7.0,'no_frame_or_minimal_metacommentary': human 77% vs AI 85%,7.0
+EVT_SCH_008,Dominant Event Initiation Source,events,categorical,65.0,62.0,-3.0,'character_choice_and_desire': human 65% vs AI 62%,3.0
+EVT_CAU_001,Explicitness of causal links,events,categorical,5.0,8.0,3.0,'predominantly_explicit_causation': human 5% vs AI 8%,3.0
+EVT_CAU_002,Continuity of the main causal chain,events,scale,3.92,4.2,0.28,mean human 3.92 vs AI 4.20,0.28
+EVT_CAU_003,Attention to unintended consequences,events,binary,41.0,52.0,12.0,'no_salient_unintended_consequences': human 41% vs AI 52%,12.0
+EVT_CAU_004,Perceived Determinism of Outcomes,events,ordinal,11.0,6.0,-5.0,'highly_contingent_or_random_feeling': human 11% vs AI 6%,5.0
+EVT_CAU_005,Primary Agent of Causal Momentum,events,categorical,56.0,65.0,9.0,'protagonist_or_focal_character_driven': human 56% vs AI 65%,9.0
+EVT_CAU_006,Treatment of Alternative or Repeated Event Paths,events,categorical,83.0,86.0,3.0,'single_linear_history_no_alternatives': human 83% vs AI 86%,3.0
+EVT_TYP_009,Balance of present-time versus flashback events,events,categorical,67.0,79.0,13.0,'mostly_present_progression': human 67% vs AI 79%,13.0
+EVT_CAU_008,Primary Progression Logic,events,categorical,4.0,1.0,-3.0,'nonlinear_fragmented': human 4% vs AI 1%,3.0
+EVT_CAU_018,Use of Repetition or Variants as Event Engine,events,binary,11.0,8.0,-3.0,'yes': human 11% vs AI 8%,3.0
+EVT_CAU_016,Temporal Scope of Events,events,categorical,38.0,43.0,5.0,'weeks_to_months': human 38% vs AI 43%,5.0
+EVT_CAU_017,Event Novelty Orientation,events,scale,3.37,3.02,-0.36,mean human 3.37 vs AI 3.02,0.36
+EVT_SCH_010,Global Narrative Schema,events,multi_select,67.0,78.0,11.0,'transformation/redemption': human 67% vs AI 78%,11.0
+EVT_SCH_011,Structural Completeness of Event Arc,events,ordinal,96.0,95.0,-1.0,'full_arc_with_resolution': human 96% vs AI 95%,1.0
+EVT_SCH_013,Tension Escalation Pattern,events,categorical,5.0,1.0,-4.0,'episodic_peaks': human 5% vs AI 1%,4.0
+EVT_SCH_014,Clear Single Climactic Event,events,binary,84.0,90.0,6.0,'yes': human 84% vs AI 90%,6.0
+PER_POV_001,Dominant narrative person,perspective,categorical,56.0,65.0,9.0,'third_person': human 56% vs AI 65%,9.0
+PER_POV_007,Embedded documents as narrative voices,perspective,binary,79.0,74.0,-5.0,'absent': human 79% vs AI 74%,5.0
+PER_POV_008,Degree of heteroglossia and polyphony,perspective,scale,2.3,2.15,-0.15,mean human 2.30 vs AI 2.15,0.15
+PER_POV_009,Frequency of direct address to the reader,perspective,ordinal,77.0,94.0,17.0,'never': human 77% vs AI 94%,17.0
+PER_POV_003,Narrator's diegetic status,perspective,categorical,57.0,65.0,8.0,'heterodiegetic_external': human 57% vs AI 65%,8.0
+PER_FOC_001,Depth of interior access to characters,perspective,scale,3.68,3.93,0.25,mean human 3.68 vs AI 3.93,0.25
+PER_FOC_002,Breadth of focalization across characters,perspective,categorical,79.0,91.0,11.0,'single_focal_character': human 79% vs AI 91%,11.0
+PER_FOC_003,Narrative distance (closeness of narrative voice to focalizer),perspective,scale,4.16,4.27,0.11,mean human 4.16 vs AI 4.27,0.11
+PER_FOC_005,Intensity of free indirect discourse,perspective,scale,1.4,1.57,0.17,mean human 1.40 vs AI 1.57,0.17
+PER_FOC_007,Narrator reliability,perspective,categorical,89.0,95.0,7.0,'reliable_or_neutral_reporter': human 89% vs AI 95%,7.0
+PER_FOC_008,Narrator presence/visibility,perspective,scale,2.99,2.79,-0.2,mean human 2.99 vs AI 2.79,0.2
+PER_FOC_009,Degree of explicit evaluative or moral commentary,perspective,scale,2.21,2.37,0.16,mean human 2.21 vs AI 2.37,0.16
+PER_DIA_001,Dialogue-to-narration proportion,perspective,scale,2.95,2.71,-0.24,mean human 2.95 vs AI 2.71,0.24
+PER_DIA_002,Dialogue tagging style,perspective,categorical,93.0,98.0,4.0,'standard_speech_tags_and_action_beats': human 93% vs AI 98%,4.0
+PER_DIA_003,Primary functions of dialogue,perspective,multi_select,34.0,59.0,24.0,'philosophical_or_thematic_debate': human 34% vs AI 59%,24.0
+PER_DIA_006,Use of alternative dialogue-like forms,perspective,binary,96.0,95.0,0.0,'no': human 96% vs AI 95%,0.0
+PER_DIA_005,Balance of direct versus indirect speech,perspective,categorical,79.0,85.0,7.0,'primarily_direct_quoted_speech': human 79% vs AI 85%,7.0
+PLT_THM_001,Number of Central Themes,plot,categorical,17.0,18.0,1.0,'single_central_theme': human 17% vs AI 18%,1.0
+PLT_THM_004,Thematic Domains,plot,multi_select,22.0,28.0,6.0,'nature/environment': human 22% vs AI 28%,6.0
+PLT_THM_005,Thematic Resolution Pattern,plot,categorical,52.0,62.0,10.0,'reframed/transcended (tension transformed into new understanding)': human 52% vs AI 62%,10.0
+PLT_THM_006,Dominant Narrative Archetype,plot,categorical,15.0,22.0,7.0,'coming_of_age/initiation': human 15% vs AI 22%,7.0
+PLT_THM_007,Archetype Blending,plot,binary,28.0,30.0,2.0,'no (mostly single archetype)': human 28% vs AI 30%,2.0
+PLT_THM_008,Thematic Unity,plot,scale,4.41,4.74,0.33,mean human 4.41 vs AI 4.74,0.33
+PLT_THM_009,Integration of Subplots with Theme,plot,categorical,58.0,79.0,21.0,'no_subplots': human 58% vs AI 79%,21.0
+PLT_THM_003,Abstract vs Concrete Thematic Orientation,plot,categorical,14.0,15.0,1.0,'psychological': human 14% vs AI 15%,1.0
+PLT_CON_001,Primary Conflict Locus,plot,categorical,19.0,9.0,-10.0,'external': human 19% vs AI 9%,10.0
+PLT_CON_004,Antagonist Ontology,plot,categorical,9.0,8.0,-1.0,'impersonal_environment_or_disaster': human 9% vs AI 8%,1.0
+PLT_CON_007,Agency in Resolution,plot,categorical,46.0,69.0,23.0,'primarily_protagonist_choice': human 46% vs AI 69%,23.0
+PLT_CON_002,Core Conflict Types,plot,multi_select,75.0,85.0,10.0,'person_vs_self': human 75% vs AI 85%,10.0
+PLT_CON_003,Stakes Domains at Risk,plot,multi_select,64.0,75.0,11.0,'moral_or_spiritual_salvation': human 64% vs AI 75%,11.0
+PLT_STR_001,Global Arc Shape,plot,categorical,85.0,94.0,9.0,'classic_rising_action_to_climax_to_denouement': human 85% vs AI 94%,9.0
+PLT_STR_002,Narrative Entry Frame,plot,categorical,48.0,62.0,14.0,'chronological_from_earliest_relevant_event': human 48% vs AI 62%,14.0
+PLT_STR_003,Density of Subplots,plot,ordinal,60.0,81.0,20.0,'no_significant_subplots': human 60% vs AI 81%,20.0
+PLT_STR_005,Dominant Revelation Pattern,plot,categorical,25.0,39.0,14.0,'transparent_exposition_minimal_secrets': human 25% vs AI 39%,14.0
+PLT_STR_006,Climax Placement,plot,categorical,94.0,96.0,2.0,'late_climax_near_end': human 94% vs AI 96%,2.0
+PLT_MOR_001,Moral/Lesson Explicitness,plot,ordinal,4.0,1.0,-3.0,'no_discernible_moral_or_thematic_judgment': human 4% vs AI 1%,3.0
+PLT_MOR_003,Ending Closure Type,plot,categorical,35.0,19.0,-15.0,'ambiguous_or_interpretive_ending': human 35% vs AI 19%,15.0
+PLT_MOR_004,Protagonist Transformational Trajectory,plot,categorical,44.0,68.0,24.0,'positive_growth_or_enlightenment': human 44% vs AI 68%,24.0
+PLT_MOR_006,Degree of Closure,plot,scale,3.9,4.2,0.3,mean human 3.90 vs AI 4.20,0.3
+PLT_MOR_007,Post-Climax Denouement Length,plot,ordinal,15.0,51.0,36.0,'extended (multiple scenes/time jumps of aftermath/epilogue)': human 15% vs AI 51%,36.0
+PLT_MOR_002,Moral Polarity Toward Protagonist,plot,categorical,30.0,52.0,22.0,'affirmative_heroic': human 30% vs AI 52%,22.0
+PLT_STR_007,Tension Escalation Clarity,plot,scale,3.9,4.12,0.22,mean human 3.90 vs AI 4.12,0.22
+PLT_STR_009,Primary Stakes Domain,plot,categorical,59.0,69.0,10.0,'identity/sanity/psychic_integrity': human 59% vs AI 69%,10.0
+PLT_STR_010,Stakes Breadth,plot,ordinal,71.0,66.0,-5.0,'intimate (affects only protagonist or small dyad)': human 71% vs AI 66%,5.0
+PLT_STR_011,Stakes Types Present,plot,multi_select,71.0,86.0,16.0,'moral_or_spiritual_integrity': human 71% vs AI 86%,16.0
+SET_LOC_005,Dominant Spatial Scale,setting,categorical,26.0,35.0,9.0,'household_or_local_block': human 26% vs AI 35%,9.0
+SET_LOC_008,Dominant Space Types,setting,multi_select,62.0,52.0,-10.0,'public_social': human 62% vs AI 52%,10.0
+SET_LOC_009,Recurring Symbolic Anchor Settings,setting,binary,17.0,8.0,-9.0,'no': human 17% vs AI 8%,9.0
+SET_LOC_010,Ontological Ambiguity of Place,setting,categorical,62.0,61.0,0.0,'straightforward_mimetic': human 62% vs AI 61%,0.0
+SET_LOC_002,Spatial Granularity Level,setting,ordinal,30.0,54.0,24.0,'4_high': human 30% vs AI 54%,24.0
+SET_LOC_011,Location Variety Scope,setting,ordinal,26.0,15.0,-11.0,'3_many_within_one_region': human 26% vs AI 15%,11.0
+SET_LOC_016,Ontological Stability of Environment,setting,categorical,9.0,9.0,1.0,'reality_fluid_or_unstable': human 9% vs AI 9%,1.0
+SET_LOC_018,Setting Mobility Pattern,setting,categorical,40.0,46.0,6.0,'static_single_hub': human 40% vs AI 46%,6.0
+SET_LOC_003,Geospatial Coherence,setting,categorical,85.0,91.0,6.0,'single_coherent_region': human 85% vs AI 91%,6.0
+SET_LOC_004,Opening Spatial Grounding,setting,ordinal,18.0,33.0,15.0,'clear_local_and_global_spatial_context': human 18% vs AI 33%,15.0
+SET_LOC_007,Spatial Mobility Pattern,setting,categorical,12.0,20.0,7.0,'single_primary_location': human 12% vs AI 20%,7.0
+SET_LOC_012,Built vs Natural Setting Balance,setting,categorical,65.0,63.0,-2.0,'mixed_built_and_natural': human 65% vs AI 63%,2.0
+SET_LOC_013,Speculative World-Building Depth,setting,scale,2.34,2.43,0.09,mean human 2.34 vs AI 2.43,0.09
+SET_LOC_014,Environmental and Ecological Emphasis,setting,scale,2.84,3.21,0.37,mean human 2.84 vs AI 3.21,0.37
+SET_TIM_015,Temporal Setting Specificity,setting,categorical,33.0,39.0,6.0,'contemporary_realistic': human 33% vs AI 39%,6.0
+SET_TIM_016,Temporal Scaffolding Complexity,setting,scale,2.45,2.21,-0.23,mean human 2.45 vs AI 2.21,0.23
+SET_ATM_017,Dominant Sensory Modalities,setting,multi_select,57.0,82.0,25.0,'olfactory': human 57% vs AI 82%,25.0
+SET_ATM_019,Setting–Plot Causal Role,setting,categorical,11.0,3.0,-8.0,'constraints_and_obstacles': human 11% vs AI 3%,8.0
+SET_ATM_020,Atmospheric Construction Techniques,setting,multi_select,73.0,90.0,17.0,'weather_and_light': human 73% vs AI 90%,17.0
+SET_ATM_022,Setting as Psychological Mirror,setting,scale,3.58,4.07,0.48,mean human 3.58 vs AI 4.07,0.48
+SET_ATM_003,Setting Agency Level,setting,categorical,55.0,37.0,-19.0,'provides_constraints_or_opportunities': human 55% vs AI 37%,19.0
+SET_ATM_004,Dominant Setting Mood Qualities,setting,multi_select,73.0,83.0,11.0,'bleak_or_oppressive': human 73% vs AI 83%,11.0
+SET_ATM_005,Sensory Density,setting,scale,3.67,3.92,0.26,mean human 3.67 vs AI 3.92,0.26
+SET_ATM_013,Dominant Environmental Mood,setting,categorical,33.0,26.0,-7.0,'mundane_realist': human 33% vs AI 26%,7.0
+SET_LOC_015,Predominant Space Types,setting,multi_select,55.0,48.0,-7.0,'public_urban_or_commercial': human 55% vs AI 48%,7.0
+SET_LOC_017,Digital or Virtual Spaces as Places,setting,binary,95.0,96.0,0.0,'no': human 95% vs AI 96%,0.0
+SET_TIM_002,Temporal Anchoring Clarity,setting,ordinal,77.0,82.0,5.0,'approximate_period_only': human 77% vs AI 82%,5.0
+STY_FIG_001,Figurative Device Density,style,scale,3.0,3.66,0.66,mean human 3.00 vs AI 3.66,0.66
+STY_FIG_002,Dominant Figurative Device Type,style,categorical,50.0,73.0,24.0,'metaphor_dominant': human 50% vs AI 73%,24.0
+STY_FIG_003,Conventional vs fresh figurative language,style,ordinal,30.0,65.0,34.0,'3 - predominantly_fresh_and_inventive_images': human 30% vs AI 65%,34.0
+STY_FIG_004,Presence of extended conceit,style,binary,60.0,17.0,-43.0,'absent': human 60% vs AI 17%,43.0
+STY_FIG_005,Recurrent metaphorical motif,style,binary,31.0,4.0,-27.0,'absent': human 31% vs AI 4%,27.0
+STY_FIG_007,Overall imageability,style,scale,4.1,4.24,0.14,mean human 4.10 vs AI 4.24,0.14
+STY_FIG_009,Concrete vs abstract lexis balance,style,scale,3.84,3.63,-0.21,mean human 3.84 vs AI 3.63,0.21
+STY_CPX_002,Predominant Sentence Length Band,style,categorical,46.0,50.0,4.0,'medium_21_35_words': human 46% vs AI 50%,4.0
+STY_CPX_005,Dominant Clause-Combining Strategy,style,categorical,92.0,99.0,7.0,'balanced_mixture_no_clear_dominance': human 92% vs AI 99%,7.0
+STY_CPX_003,Use of Sentence Fragments,style,binary,33.0,15.0,-18.0,'absent_or_negligible': human 33% vs AI 15%,18.0
+STY_CPX_004,Parataxis vs Hypotaxis Preference,style,categorical,64.0,85.0,22.0,'balanced': human 64% vs AI 85%,22.0
+STY_CPX_006,Scene vs Summary Balance (Show vs Tell),style,ordinal,14.0,6.0,-8.0,'mostly_scene_or_show': human 14% vs AI 6%,8.0
+STY_TON_001,Dominant Tonal Register,style,categorical,52.0,77.0,25.0,'lyrical_or_meditative': human 52% vs AI 77%,25.0
+STY_TON_002,Evaluative Commentary Density,style,scale,2.32,2.31,-0.0,mean human 2.32 vs AI 2.31,0.0
+STY_TON_005,Voice Markedness,style,ordinal,83.0,98.0,15.0,'moderately_marked_distinct_but_not_extreme': human 83% vs AI 98%,15.0
+STY_TON_006,Sound Patterning Prominence,style,ordinal,55.0,91.0,36.0,'noticeable': human 55% vs AI 91%,36.0
+STY_TON_007,Rhythmic Contrast Strategy,style,categorical,92.0,99.0,7.0,'strong_contrast_between_long_and_short': human 92% vs AI 99%,7.0
+STY_ALL_002,Primary Allusion Domain,style,categorical,16.0,4.0,-12.0,'pop_culture_media_entertainment': human 16% vs AI 4%,12.0
+STY_ALL_003,Allusion Obscurity Level,style,ordinal,79.0,85.0,6.0,'common_accessible_references_most_readers_will_know': human 79% vs AI 85%,6.0
+STY_ALL_005,Meta-Discursive Commentary on Texts,style,binary,47.0,44.0,-3.0,'absent': human 47% vs AI 44%,3.0
+STY_ALL_006,Degree of Genre Pastiche,style,categorical,22.0,16.0,-5.0,'none_straight_style_without_pastiche': human 22% vs AI 16%,5.0
+STY_ALL_004,Primary Function of Allusion,style,categorical,26.0,46.0,21.0,'theme_signposting_or_moral_commentary': human 26% vs AI 46%,21.0
+STY_CPX_010,Mean sentence length category,style,categorical,67.0,75.0,8.0,'medium_12_to_20_words': human 67% vs AI 75%,8.0
+STY_CPX_011,Syntactic subordination depth,style,scale,3.27,3.32,0.05,mean human 3.27 vs AI 3.32,0.05
+STY_CPX_012,Sentence-structure repertoire,style,multi_select,70.0,99.0,29.0,'frequent_parallel_or_list-like_structures': human 70% vs AI 99%,29.0
+STY_CPX_013,Parenthetical aside frequency,style,ordinal,85.0,88.0,3.0,'2 - occasional_but_not_structural': human 85% vs AI 88%,3.0
+STY_ALL_015,Lexical register and consistency,style,categorical,56.0,19.0,-37.0,'mixed_register_with_frequent_code_switching': human 56% vs AI 19%,37.0
+STY_ALL_016,Latinate vs Anglo-Saxon lexical flavor,style,scale,2.51,2.83,0.32,mean human 2.51 vs AI 2.83,0.32
+STY_ALL_017,Allusion density,style,scale,2.59,2.26,-0.33,mean human 2.59 vs AI 2.26,0.33
+STY_ALL_018,Allusion domain diversity,style,multi_select,40.0,13.0,-27.0,'pop_culture_or_brand_names': human 40% vs AI 13%,27.0
+STY_ALL_019,Jargon and technical terminology usage,style,ordinal,72.0,71.0,-1.0,'2 - occasional_technical_terms_for_flavor': human 72% vs AI 71%,1.0
+STY_TON_020,Evaluative stance intensity,style,scale,2.32,2.32,-0.0,mean human 2.32 vs AI 2.32,0.0
+STY_TON_021,Predominant tonal quality,style,categorical,40.0,71.0,31.0,'earnest_or_lyrical': human 40% vs AI 71%,31.0
+STY_TON_023,Use of irony and humor,style,ordinal,12.0,38.0,26.0,'1 - entirely_straightfaced_no_discernible_humor': human 12% vs AI 38%,26.0
+STY_TON_024,Rhythmic markedness of prose,style,scale,3.17,3.61,0.44,mean human 3.17 vs AI 3.61,0.44
+STY_TON_025,Sound patterning devices,style,multi_select,79.0,98.0,19.0,'alliteration_prominent': human 79% vs AI 98%,19.0
+STY_TON_027,Meta-narrative or self-reflexive commentary,style,binary,61.0,59.0,-2.0,'absent': human 61% vs AI 59%,2.0
+STY_TON_028,Framing device type,style,categorical,75.0,88.0,12.0,'no_explicit_frame_plain_narration': human 75% vs AI 88%,12.0
+STY_TON_029,Information density per sentence,style,scale,3.36,3.62,0.27,mean human 3.36 vs AI 3.62,0.27
+SIT_GEN_001,Primary Genre Category,situatedness,categorical,8.0,15.0,6.0,'historical_realist': human 8% vs AI 15%,6.0
+SIT_GEN_002,Genre Fidelity Mode,situatedness,categorical,36.0,44.0,9.0,'straight_genre_fulfillment': human 36% vs AI 44%,9.0
+SIT_GEN_003,Genre Signal Timing,situatedness,ordinal,7.0,2.0,-5.0,'mid-story (after some neutral buildup)': human 7% vs AI 2%,5.0
+SIT_GEN_004,Tone Toward Genre Conventions,situatedness,categorical,65.0,84.0,19.0,'earnest_sincere': human 65% vs AI 84%,19.0
+SIT_GEN_005,Narrated Genre Awareness,situatedness,ordinal,52.0,60.0,8.0,'no_explicit_genre_awareness': human 52% vs AI 60%,8.0
+SIT_GEN_006,Plot vs Atmosphere Orientation,situatedness,ordinal,34.0,40.0,6.0,'5-Strongly atmosphere-driven': human 34% vs AI 40%,6.0
+SIT_GEN_009,Assumed Reader Competence,situatedness,categorical,40.0,32.0,-8.0,'Literary-educated reader (expects comfort with complex structures/allusions)': human 40% vs AI 32%,8.0
+SIT_GEN_010,Moral / Philosophical Weighting,situatedness,scale,3.26,3.68,0.42,mean human 3.26 vs AI 3.68,0.42
+SIT_MET_004,Fourth-Wall Permeability,situatedness,ordinal,43.0,63.0,20.0,'1-No fourth-wall breaking (reader never acknowledged)': human 43% vs AI 63%,20.0
+SIT_MET_006,Embedded Storytelling Scenes,situatedness,ordinal,18.0,12.0,-7.0,'3-Extensive (multiple or structurally central embedded narratives/documents)': human 18% vs AI 12%,7.0
+SIT_MET_002,Fourth-Wall Breaking,situatedness,binary,89.0,98.0,9.0,'no direct address': human 89% vs AI 98%,9.0
+SIT_MET_005,Ontological Play & Reality Instability,situatedness,categorical,25.0,33.0,8.0,"'single speculative layer but ontologically stable (e.g., one magical or SF premise taken as given)': human 25% vs AI 33%",8.0
+SIT_MET_009,Attitude Toward Literary Tradition,situatedness,categorical,25.0,39.0,14.0,"'reverent/continuist (aims mainly to honour, preserve, or smoothly extend tradition)': human 25% vs AI 39%",14.0
+SIT_MET_202,Intertextual Strategy Types,situatedness,multi_select,46.0,24.0,-23.0,'explicit_named_reference_to_specific_texts_or_authors': human 46% vs AI 24%,23.0
+SIT_MET_008,Reference Explicitness,situatedness,categorical,50.0,72.0,22.0,"'Primarily implicit echoes (genres, archetypes, unnamed myths)': human 50% vs AI 72%",22.0
+SIT_MET_012,Literary Ambition Signaling,situatedness,categorical,63.0,79.0,15.0,'crossover genre with literary aspirations (genre frame but clear stylistic/thematic ambition)': human 63% vs AI 79%,15.0
+SIT_MET_102,Ending-Level Self-Commentary on Story,situatedness,binary,37.0,47.0,10.0,'yes': human 37% vs AI 47%,10.0
+SIT_MET_103,Embedded Narrative Structures,situatedness,categorical,50.0,53.0,3.0,'none': human 50% vs AI 53%,3.0
+SIT_MET_104,Narrator Address Mode,situatedness,categorical,80.0,94.0,15.0,'no_direct_address': human 80% vs AI 94%,15.0
+SIT_MET_301,Perceived Literary Ambition in Prose Style,situatedness,scale,3.48,3.77,0.3,mean human 3.48 vs AI 3.77,0.3
+SIT_MET_302,Structural Experimentation Level,situatedness,ordinal,46.0,62.0,16.0,'simple_linear_single_strand': human 46% vs AI 62%,16.0
+SIT_MET_303,Thematic Explicitness and Moralizing,situatedness,scale,3.28,3.94,0.65,mean human 3.28 vs AI 3.94,0.65
+SIT_MET_402,Required External Knowledge Level,situatedness,ordinal,35.0,48.0,13.0,'none_beyond_everyday_life': human 35% vs AI 48%,13.0
+SIT_MET_403,Jargon and In-Group Reference Density,situatedness,ordinal,61.0,70.0,9.0,'none_or_minimal': human 61% vs AI 70%,9.0
+SIT_MET_501,Narratorial Thematic Commentary Presence,situatedness,binary,52.0,76.0,25.0,'yes': human 52% vs AI 76%,25.0
+TMP_DUR_002,Narrative Time Compression,temporal_structure,scale,2.82,2.74,-0.08,mean human 2.82 vs AI 2.74,0.08
+TMP_DUR_004,Dominant pacing mode,temporal_structure,categorical,46.0,52.0,6.0,'scene_dominant': human 46% vs AI 52%,6.0
+TMP_DUR_006,Use of Iterative or Habitual Narration,temporal_structure,binary,20.0,19.0,-1.0,'no': human 20% vs AI 19%,1.0
+TMP_DUR_009,Density of Explicit Time Markers,temporal_structure,scale,3.04,3.08,0.03,mean human 3.04 vs AI 3.08,0.03
+TMP_DUR_010,Typical Inter-Scene Time Jump Magnitude,temporal_structure,categorical,33.0,42.0,9.0,'multi_day_to_few_weeks': human 33% vs AI 42%,9.0
+TMP_DUR_007,Ellipsis frequency category,temporal_structure,categorical,6.0,3.0,-3.0,'frequent_large_ellipses': human 6% vs AI 3%,3.0
+TMP_DUR_008,Precision of temporal anchoring,temporal_structure,ordinal,83.0,82.0,-1.0,'3_relative_day_and_duration_markers': human 83% vs AI 82%,1.0
+TMP_DUR_011,Dominant Narrative Tense,temporal_structure,categorical,86.0,96.0,10.0,'past': human 86% vs AI 96%,10.0
+TMP_DUR_012,Narrator's Temporal Distance from Events,temporal_structure,categorical,50.0,60.0,10.0,'slightly_retrospective (days_to_few_years_after)': human 50% vs AI 60%,10.0
+TMP_ORD_001,Global Chronological Structure,temporal_structure,categorical,55.0,72.0,16.0,'mostly_chronological_with_rare_flashbacks': human 55% vs AI 72%,16.0
+TMP_ORD_004,Depth of Flashback Nesting,temporal_structure,ordinal,10.0,12.0,2.0,'no_flashbacks': human 10% vs AI 12%,2.0
+TMP_ORD_005,Backstory Placement Strategy,temporal_structure,categorical,12.0,18.0,6.0,'front_loaded_exposition': human 12% vs AI 18%,6.0
+TMP_ORD_010,Degree of Chronological Discontinuity,temporal_structure,scale,2.4,2.12,-0.28,mean human 2.40 vs AI 2.12,0.28
+TMP_ORD_002,Anachrony intensity,temporal_structure,scale,2.59,2.31,-0.28,mean human 2.59 vs AI 2.31,0.28
+TMP_ORD_007,Number of interwoven temporal strands,temporal_structure,categorical,86.0,95.0,8.0,'single_strand': human 86% vs AI 95%,8.0
+TMP_ORD_012,Explicit time loops or multi-version retellings,temporal_structure,binary,1.0,1.0,0.0,'yes': human 1% vs AI 1%,0.0
+TMP_ORD_014,Ending temporal scope,temporal_structure,categorical,70.0,51.0,-18.0,'ends_at_or_just_after_main_climax_no_forward_jump': human 70% vs AI 51%,18.0
+TMP_ORD_011,Dreams/visions as temporal distortion,temporal_structure,binary,15.0,15.0,0.0,'significant_dream_or_vision_time': human 15% vs AI 15%,0.0
+TMP_ORD_008,Temporal Loop or Reset Pattern,temporal_structure,multi_select,1.0,1.0,0.0,'structure_as_infinite_or_unresolved_loop': human 1% vs AI 1%,0.0
+TMP_ORD_009,Dominant Narrative Frequency Mode,temporal_structure,categorical,96.0,98.0,2.0,'singulative (events_told_once_as_they_occur)': human 96% vs AI 98%,2.0
+TMP_DUR_021,Character aging and biographical scope,temporal_structure,categorical,3.0,1.0,-2.0,'multi_generational_or_system_level_history': human 3% vs AI 1%,2.0
+TMP_DUR_018,Use of seasons and cyclical time as structuring devices,temporal_structure,scale,2.0,2.06,0.06,mean human 2.00 vs AI 2.06,0.06
+TMP_DUR_019,Prevalence of time-of-day markers,temporal_structure,ordinal,15.0,13.0,-2.0,'2_rare_mentions_of_general_times_of_day': human 15% vs AI 13%,2.0
+TMP_DUR_013,Presence of explicit ticking clock or deadline,temporal_structure,binary,70.0,67.0,-3.0,'no': human 70% vs AI 67%,3.0
+AGENT_ID_001,Scope of named human agents,agents,categorical,35.0,16.0,-19.0,'7+': human 35% vs AI 16%,19.0
+AGENT_ID_004,Types of non-human or collective agents,agents,multi_select,10.0,16.0,6.0,"'institutions/personified organizations (e.g., 'the Consortium', 'the Church')': human 10% vs AI 16%",6.0
+AGENT_ID_005,Naming practice for the central character,agents,categorical,70.0,80.0,10.0,"'named personal name (e.g., 'Maria', 'Leon')': human 70% vs AI 80%",10.0
+AGENT_ID_007,Opacity of central character at introduction,agents,categorical,74.0,83.0,9.0,"'transparent (name, role, and situation given immediately)': human 74% vs AI 83%",9.0
+AGENT_ID_002,Secondary character density,agents,ordinal,46.0,61.0,15.0,'few (2–3)': human 46% vs AI 61%,15.0
+AGENT_ID_003,Proportion of named vs. unnamed characters,agents,categorical,45.0,27.0,-18.0,'mix of proper names and role-descriptors across both major and minor characters': human 45% vs AI 27%,18.0
+AGENT_ROLE_001,Primary functional role of the central character,agents,categorical,90.0,93.0,3.0,'active protagonist driving the main plot': human 90% vs AI 93%,3.0
+AGENT_ROLE_002,Nature of principal antagonistic force,agents,multi_select,48.0,40.0,-9.0,'individual human antagonist(s)': human 48% vs AI 40%,9.0
+AGENT_ROLE_003,Plot agency level of the central character,agents,ordinal,28.0,37.0,9.0,'mostly active': human 28% vs AI 37%,9.0
+AGENT_ROLE_004,Use of collective human groups as agents,agents,binary,33.0,28.0,-5.0,'yes': human 33% vs AI 28%,5.0
+AGENT_ROLE_005,Emphasis on social network versus solitude,agents,ordinal,16.0,30.0,14.0,'low (mostly solitary)': human 16% vs AI 30%,14.0
+AGENT_ROLE_006,Functions of secondary characters,agents,multi_select,63.0,49.0,-13.0,"'flat types or foils (e.g., bullies, bureaucrats, stock relatives)': human 63% vs AI 49%",13.0
+AGENT_ROLE_008,Presence of a frame narrator distinct from main actors,agents,binary,8.0,2.0,-6.0,'yes': human 8% vs AI 2%,6.0
+AGENT_ROLE_009,Primary epistemic agent (who interprets the story's mysteries),agents,categorical,88.0,96.0,7.0,'central character themselves': human 88% vs AI 96%,7.0
+AGENT_ATTR_001,Dominant mode of introducing the central character,agents,categorical,30.0,52.0,22.0,'external description (appearance/background summary)': human 30% vs AI 52%,22.0
+AGENT_ATTR_002,Richness of physical description for the central character,agents,ordinal,89.0,92.0,3.0,'sparse (1-2 brief details)': human 89% vs AI 92%,3.0
+AGENT_ATTR_003,Social identity anchors for the central character,agents,multi_select,60.0,56.0,-4.0,"'family roles (e.g., mother, son, aunt)': human 60% vs AI 56%",4.0
+AGENT_ATTR_004,Explicit trait labeling,agents,binary,58.0,71.0,13.0,'yes': human 58% vs AI 71%,13.0
+AGENT_ATTR_005,Primary technique for rendering inner life,agents,categorical,42.0,50.0,8.0,'free indirect discourse (3rd person blending narrator and character voice)': human 42% vs AI 50%,8.0
+AGENT_ATTR_006,Psychological depth scale for central character,agents,scale,3.45,3.67,0.21,mean human 3.45 vs AI 3.67,0.21
+AGENT_ATTR_009,Closure of central character's psychological arc,agents,binary,85.0,94.0,9.0,'yes': human 85% vs AI 94%,9.0
+AGENT_ATTR_008,Staggered vs. batch introduction of core cast,agents,binary,26.0,37.0,11.0,'batch introduction early in the story': human 26% vs AI 37%,11.0
+AGENT_EMO_009,Dominant mode of emotional expression,agents,categorical,39.0,81.0,42.0,'embodied_sensations_and_metaphors': human 39% vs AI 81%,42.0
+AGENT_EMO_012,Preferred cues for conveying emotional state,agents,multi_select,47.0,87.0,40.0,"'metaphorical or environmental mirroring (weather, setting, or images echoing mood)': human 47% vs AI 87%",40.0
+AGENT_MOT_003,Dominant sources of motivation,agents,multi_select,34.0,49.0,15.0,'ethical or ideological principles': human 34% vs AI 49%,15.0
+AGENT_MOT_004,Evolution of motivations over time,agents,binary,59.0,70.0,11.0,'yes': human 59% vs AI 70%,11.0
+AGENT_MOT_011,Explicitness of character motivations,agents,ordinal,52.0,66.0,14.0,'occasionally_stated_internally': human 52% vs AI 66%,14.0
+AGENT_MOT_012,Typical motivation domains for major characters,agents,multi_select,35.0,52.0,17.0,'ideological_or_moral_commitments': human 35% vs AI 52%,17.0
+AGENT_MOT_014,Complexity of protagonist motivation,agents,ordinal,54.0,60.0,6.0,'conflicted or ambivalent motives are central (the protagonist is pulled in opposing directions)': human 54% vs AI 60%,6.0
+AGENT_MOT_016,Dominant type of protagonist change,agents,categorical,62.0,71.0,9.0,"'psychological self-understanding (e.g., insight into self, trauma, desires)': human 62% vs AI 71%",9.0
+AGENT_TRP_001,Explicit use of trope or archetype labels,agents,binary,4.0,4.0,0.0,'yes': human 4% vs AI 4%,0.0
+AGENT_TRP_002,Archetypal register of the central character,agents,categorical,63.0,65.0,2.0,'mostly mimetic/realist individual (everyday realism)': human 63% vs AI 65%,2.0
+AGENT_TRP_003,Subversion or reinforcement of archetype,agents,categorical,91.0,94.0,3.0,'partial complication/nuancing of archetype': human 91% vs AI 94%,3.0
+AGENT_TRP_005,Degree of personifying institutions or systems as characters,agents,ordinal,77.0,67.0,-10.0,'not personified': human 77% vs AI 67%,10.0
+AGENT_TRP_014,Stance toward genre archetypes,agents,categorical,5.0,3.0,-2.0,'mostly_subverts_or_critiques_archetypes': human 5% vs AI 3%,2.0
+AGENT_ROLE_015,Configuration of primary plot-driving agents,agents,categorical,78.0,80.0,2.0,'single_central_protagonist': human 78% vs AI 80%,2.0
+AGENT_ROLE_016,Agency of secondary characters,agents,ordinal,13.0,16.0,3.0,'minimal_mostly_reactive_helpers_or_obstacles': human 13% vs AI 16%,3.0
+AGENT_ROLE_017,Nature of antagonistic force,agents,categorical,23.0,19.0,-4.0,'singular_antagonist_with_little_interiority': human 23% vs AI 19%,4.0
+AGENT_ROLE_018,Complexity of modeled social network,agents,ordinal,19.0,35.0,16.0,'very_simple_few_relationships': human 19% vs AI 35%,16.0
+AGENT_ATTR_019,Intergenerational relationships as core engine,agents,binary,56.0,60.0,5.0,'no': human 56% vs AI 60%,5.0
+AGENT_ATTR_021,Dominant trajectories of main character change,agents,multi_select,30.0,45.0,16.0,'moral_learning_or_increased_empathy': human 30% vs AI 45%,16.0
+AGENT_ATTR_024,Density of figurative language in character depiction,agents,scale,3.06,3.78,0.71,mean human 3.06 vs AI 3.78,0.71
+AGENT_ID_022,Presence of meta- or non-diegetic agents,agents,binary,97.0,99.0,2.0,'no': human 97% vs AI 99%,2.0
+AGENT_ATTR_010,Dominant technique for rendering interiority,agents,categorical,42.0,54.0,12.0,'close or free indirect third-person (narrator's voice blends with a character's thoughts)': human 42% vs AI 54%,12.0
+AGENT_ID_024,Number of distinct internal POVs,agents,categorical,79.0,91.0,11.0,'one POV character': human 79% vs AI 91%,11.0
+AGENT_TRP_018,Reliance on genre archetypes for main characters,agents,categorical,56.0,60.0,4.0,'medium: protagonists clearly echo genre archetypes but also complicate or subvert them': human 56% vs AI 60%,4.0
+AGENT_ROLE_019,Primary locus of plot-driving agency,agents,categorical,27.0,21.0,-6.0,'shared among multiple human characters (ensemble agency)': human 27% vs AI 21%,6.0
+AGENT_ROLE_020,Protagonist initiative vs. reactivity,agents,ordinal,13.0,14.0,2.0,'mostly initiates key actions and decisions': human 13% vs AI 14%,2.0
+AGENT_ID_023,Prominence of collectives as agents,agents,categorical,31.0,29.0,-2.0,'present but background (collectives mentioned but rarely act as unified agents)': human 31% vs AI 29%,2.0
+AGENT_ROLE_021,Social network richness around the protagonist,agents,ordinal,18.0,33.0,16.0,'minimal: few close relationships shown (1–2 recurring connections)': human 18% vs AI 33%,16.0
+AGENT_EMO_001,Frequency of explicit emotion naming,agents,ordinal,71.0,91.0,19.0,'occasional': human 71% vs AI 91%,19.0
+AGENT_EMO_002,Modes of conveying the central character's emotions,agents,multi_select,50.0,89.0,39.0,'metaphorical or environmental imagery reflecting mood': human 50% vs AI 89%,39.0
+AGENT_EMO_003,Complexity of emotional arc,agents,ordinal,43.0,34.0,-8.0,'some distinct shifts': human 43% vs AI 34%,8.0
+AGENT_EMO_004,Presence of explicit emotional self-reflection,agents,binary,14.0,8.0,-6.0,'no': human 14% vs AI 8%,6.0
+SOC_STR_001,Size of Social Network,social_networks,ordinal,42.0,60.0,18.0,'small_3_4': human 42% vs AI 60%,18.0
+SOC_STR_010,Individualization of Community,social_networks,categorical,43.0,34.0,-9.0,'mix_of_named_individuals_and_collective_masses': human 43% vs AI 34%,9.0
+SOC_STR_017,Dyadic vs Group Scene Emphasis,social_networks,scale,1.93,1.78,-0.15,mean human 1.93 vs AI 1.78,0.15
+SOC_STR_002,Network Density of Side-to-Side Ties,social_networks,categorical,54.0,71.0,18.0,'hub_and_spoke': human 54% vs AI 71%,18.0
+SOC_STR_003,Institutions as Social Actors,social_networks,binary,49.0,49.0,0.0,"'yes: at least one institution/collective is personified as having ties, goals, or conflicts': human 49% vs AI 49%",0.0
+SOC_STR_004,Community Salience,social_networks,categorical,49.0,46.0,-3.0,"'active secondary agent: community exerts pressure, offers help, or significantly shapes outcomes': human 49% vs AI 46%",3.0
+SOC_STR_005,Cross-Boundary Relationships,social_networks,binary,26.0,26.0,1.0,'no: all meaningful ties are within a single social stratum or kind': human 26% vs AI 26%,1.0
+SOC_REL_004,Explicit Enumeration vs Enacted Interaction,social_networks,categorical,75.0,83.0,8.0,'predominantly_enacted_in_scenes': human 75% vs AI 83%,8.0
+SOC_REL_013,Diversity of Communication Channels,social_networks,multi_select,26.0,30.0,5.0,'letters_notes_or_diaries': human 26% vs AI 30%,5.0
+SOC_REL_016,Reliance on Relationship Labels vs Inference,social_networks,ordinal,4.0,8.0,4.0,'mostly_inferred_from_behavior': human 4% vs AI 8%,4.0
+SOC_REL_005,Depth of Relational History Provided,social_networks,ordinal,9.0,11.0,2.0,'none_or_minimal': human 9% vs AI 11%,2.0
+SOC_REL_006,Centrality of Non-Human or Technological Relationships,social_networks,ordinal,22.0,29.0,7.0,'primary_axis_of_story': human 22% vs AI 29%,7.0
+SOC_REL_014,Ontological Layers of Social Relations,social_networks,multi_select,23.0,14.0,-9.0,'explicit_meta_relationship_to_narrator_reader_or_story_system': human 23% vs AI 14%,9.0
+SOC_REL_007,Range of Relationship Types Present,social_networks,multi_select,48.0,30.0,-18.0,'romantic_or_sexual': human 48% vs AI 30%,18.0
+SOC_REL_009,Prominence of Non-Human or Institutional Relationship Partners,social_networks,ordinal,22.0,29.0,7.0,'central_to_core_relationships': human 22% vs AI 29%,7.0
+SOC_REL_008,Show vs Tell in Relationship Construction,social_networks,scale,3.74,3.84,0.1,mean human 3.74 vs AI 3.84,0.1
+SOC_REL_010,Network Description Style,social_networks,categorical,11.0,16.0,5.0,'scene-implied: relationships are inferred from scenes and dialogue without explicit listing or labeling': human 11% vs AI 16%,5.0
+SOC_DYN_010,Dominant Power Structure Form,social_networks,categorical,33.0,29.0,-4.0,'shifting_or_contested': human 33% vs AI 29%,4.0
+SOC_DYN_012,Centrality of Abusive or Manipulative Asymmetric Ties,social_networks,binary,53.0,48.0,-4.0,'yes': human 53% vs AI 48%,4.0
+SOC_PWR_015,Attitude Toward Authority Structures,social_networks,categorical,7.0,13.0,6.0,"'subversive: protagonists consciously work to undermine, escape, or overturn authority structures': human 7% vs AI 13%",6.0
+SOC_PWR_016,Presence of Broker/Bridge Characters,social_networks,binary,45.0,40.0,-5.0,'no: no clear bridging figure; groups relate directly or not at all': human 45% vs AI 40%,5.0
+SOC_DYN_011,Central Relationship Trajectory,social_networks,categorical,18.0,29.0,11.0,'strengthening/repair: an existing strained or modest bond deepens or is healed': human 18% vs AI 29%,11.0
+SOC_DYN_013,Primary Trajectory of Central Relationship(s),social_networks,categorical,19.0,31.0,12.0,'strengthening_or_reconciliation': human 19% vs AI 31%,12.0
+SOC_DYN_014,Number of Major Relationship Turning Points,social_networks,ordinal,52.0,57.0,5.0,'two': human 52% vs AI 57%,5.0
+SOC_STR_016,Salience of Broader Community Beyond Core Characters,social_networks,ordinal,14.0,21.0,8.0,'background_mentioned_only': human 14% vs AI 21%,8.0
+SOC_STR_018,Crowds or Mobs as Coherent Agents,social_networks,binary,28.0,24.0,-4.0,'yes': human 28% vs AI 24%,4.0
+SOC_DYN_019,Dominant Interpersonal Conflict Modality,social_networks,categorical,57.0,48.0,-9.0,'open_confrontation': human 57% vs AI 48%,9.0
+SOC_DYN_020,Violence Within Close Relationships,social_networks,binary,45.0,34.0,-10.0,'yes': human 45% vs AI 34%,10.0
+SOC_DYN_021,On-Page Reconciliation or Forgiveness,social_networks,categorical,61.0,48.0,-13.0,'no_reconciliation': human 61% vs AI 48%,13.0
+SOC_REL_022,Primary Channel for Deep Relational Content,social_networks,categorical,51.0,54.0,3.0,'shared_actions_and_routines': human 51% vs AI 54%,3.0
+SOC_REL_023,Presence of Ritualized or Coded Communication,social_networks,binary,51.0,56.0,5.0,'yes': human 51% vs AI 56%,5.0
+SOC_REL_024,Narrative Frame as Social Interaction,social_networks,binary,92.0,98.0,6.0,'no': human 92% vs AI 98%,6.0
+SOC_COM_017,Dominant Channel for Pivotal Interactions,social_networks,categorical,41.0,46.0,5.0,"'ritual/action/gesture (shared labour, offerings, performances, nonverbal acts)': human 41% vs AI 46%",5.0
+SOC_COM_018,Collective or Choral Voices,social_networks,binary,95.0,97.0,2.0,'no: narration and focalization stay with individuals only': human 95% vs AI 97%,2.0
+SOC_DYN_007,Explicitness of Hierarchy and Authority,social_networks,ordinal,4.0,7.0,3.0,'minimal_or_flat_relations': human 4% vs AI 7%,3.0
+SOC_REL_012,Role of Gossip and Rumor,social_networks,binary,50.0,42.0,-8.0,'salient_gossip_or_rumor_dynamics': human 50% vs AI 42%,8.0
+SOC_REL_018,Power Symmetry in Central Relationship,social_networks,categorical,40.0,36.0,-4.0,'moderately_asymmetric': human 40% vs AI 36%,4.0
+SOC_DYN_008,Protagonist's Social Trajectory,social_networks,categorical,40.0,34.0,-6.0,'network_contracts_or_leads_to_isolation': human 40% vs AI 34%,6.0
+SOC_DYN_009,Degree of Relationship Transformation,social_networks,ordinal,57.0,65.0,8.0,'one_major_transformation': human 57% vs AI 65%,8.0

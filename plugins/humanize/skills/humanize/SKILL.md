@@ -1,6 +1,7 @@
 ---
 name: humanize
 description: Use when drafting or editing any prose — email, essay, documentation, blog post, story, chat reply — or when asked to "humanize" text, make it "sound less like AI", "more natural", "less robotic", or remove AI tells. Also use when reviewing prose someone else wrote. Not for code, config, or commit messages.
+argument-hint: "[path | text] [--audit-only] [--fiction | --prose]"
 ---
 
 # Humanize
@@ -20,6 +21,22 @@ the text. No audit table, no commentary about tells.
 
 **Audit mode** — the user asks you to humanize existing text, or `/humanize`
 was invoked. Follow all six steps below.
+
+## Invocation (`/humanize`)
+
+Arguments: $ARGUMENTS
+
+Resolve the target:
+- Strip any flags (`--audit-only`, `--fiction`, `--prose`) from the arguments.
+- If what remains is a path to an existing file, read that file.
+- Otherwise treat what remains as the text itself.
+- If nothing remains, use the most recent prose you produced in this
+  conversation. If there is none, say so and stop.
+
+Flags:
+- `--audit-only` — stop after step 3 (the audit table). Do not rewrite.
+- `--fiction` / `--prose` — override step 1's classification (`--prose` means
+  `expository` or `conversational`; pick whichever fits).
 
 ## Audit mode
 

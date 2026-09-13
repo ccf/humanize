@@ -11,8 +11,12 @@ def test_marketplace_points_at_existing_plugin_components():
     p = m["plugins"][0]
     src = ROOT / p["source"]
     assert src.is_dir()
-    for rel in p["commands"] + p["skills"]:
-        assert (src / rel).exists(), rel
+    # plugin.json is authoritative; components are discovered from the plugin's directories.
+    assert p["strict"] is True
+    for key in ("commands", "agents", "skills"):
+        assert key not in p, f"{key} must not be duplicated in the marketplace entry"
+    assert (src / ".claude-plugin/plugin.json").is_file()
+    assert (src / "commands/humanize.md").is_file()
     assert (src / "skills/humanize/SKILL.md").is_file()
     assert (src / "skills/humanize/scripts/surface_scan.py").is_file()
     for doc in (

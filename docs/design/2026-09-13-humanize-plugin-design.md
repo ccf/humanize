@@ -66,7 +66,7 @@ humanize/
       ai_email.txt
       human_email.txt
       expected_tells.md
-  docs/superpowers/specs/
+  docs/design/                           # this spec and the implementation plan
   README.md
   LICENSE                                # MIT
 ```

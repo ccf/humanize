@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.9+ standard library only (`re`, `statistics`, `json`, `argparse`); pytest for tests; Claude Code plugin/marketplace manifests (JSON) and skill/command markdown.
 
-**Spec:** `docs/superpowers/specs/2026-09-13-humanize-plugin-design.md`
+**Spec:** `docs/design/2026-09-13-humanize-plugin-design.md`
 
 ## Global Constraints
 
@@ -26,6 +26,7 @@
   Claude-Session: https://claude.ai/code/session_01KTKYvLEVY4mStJ3iPaB1Mh
   ```
 - Working directory for all commands: `/Users/ccf/git/humanize`.
+- From Task 1b onward, dependencies are managed by `uv` and pre-commit hooks run on every commit (ruff format, ruff check, pytest, hygiene). Run tests as `uv run pytest -q`. Before committing, run `uv run ruff format . && uv run ruff check --fix .`; if ruff reformats code that a task brief gave verbatim, commit the formatted version — behavior and tests must not change. Never bypass hooks with `--no-verify`.
 
 ---
 
@@ -345,6 +346,168 @@ Claude-Session: https://claude.ai/code/session_01KTKYvLEVY4mStJ3iPaB1Mh
 EOF
 )"
 ```
+
+---
+
+### Task 1b: Tooling — uv-managed dependencies, ruff, pre-commit, Bugbot guidance
+
+**Files:**
+- Modify: `pyproject.toml` (replace the Task 1 version entirely)
+- Create: `.pre-commit-config.yaml`, `.cursor/BUGBOT.md`
+- Generated and committed: `uv.lock`
+
+**Interfaces:**
+- Consumes: the Task 1 `pyproject.toml`, `surface_scan.py`, and tests.
+- Produces: `uv run pytest -q`, `uv run ruff …`, and `uv run pre-commit …` all work; the git pre-commit hook is installed; every later commit passes ruff format, ruff check, pytest, and hygiene hooks.
+
+- [ ] **Step 1: Replace `pyproject.toml`**
+
+```toml
+[project]
+name = "humanize-plugin"
+version = "0.1.0"
+description = "Claude Code plugin that removes AI tells from prose"
+requires-python = ">=3.9"
+license = "MIT"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4",
+  "pytest>=8",
+  "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+extend-exclude = ["data", "tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+```
+
+`package = false` because this repo is a Claude Code plugin, not an installable Python distribution; `uv` then manages the dev environment without trying to build anything.
+
+- [ ] **Step 2: Create the environment and lockfile**
+
+Run: `uv sync`
+Expected: creates `.venv/` (already git-ignored) and `uv.lock`; installs pytest, ruff, pre-commit. Then `uv run pytest -q` → `16 passed`.
+
+- [ ] **Step 3: Write `.pre-commit-config.yaml`**
+
+```yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(tests/fixtures/|data/)
+      - id: end-of-file-fixer
+        exclude: ^(tests/fixtures/|data/)
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+```
+
+The `rev:` values above are floors. Pin them to current releases with:
+
+Run: `uv run pre-commit autoupdate`
+Expected: both `rev:` lines updated to the latest tags; commit the pinned file.
+
+`tests/fixtures/` and `data/` are excluded from the whitespace fixers because fixture prose and the upstream data files must stay byte-identical.
+
+- [ ] **Step 4: Install the hook and format existing code**
+
+Run:
+```bash
+uv run pre-commit install
+uv run ruff format .
+uv run ruff check --fix .
+uv run pre-commit run --all-files
+```
+Expected: `pre-commit installed at .git/hooks/pre-commit`; ruff may reformat `surface_scan.py` and `tests/test_surface_scan.py` (line wrapping only). Re-run `uv run pre-commit run --all-files` until every hook reports `Passed`. If `ruff check` reports an error it cannot auto-fix, fix it by hand without changing behavior and note it in the report. `uv run pytest -q` must still show `16 passed`.
+
+- [ ] **Step 5: Write `.cursor/BUGBOT.md`**
+
+```markdown
+# Bugbot review guide — humanize
+
+This repo is a Claude Code plugin that audits prose for AI tells and rewrites
+it. Design spec: `docs/design/2026-09-13-humanize-plugin-design.md`.
+
+## Invariants to enforce
+
+- `plugins/humanize/skills/humanize/scripts/surface_scan.py` imports only the
+  Python standard library and runs on Python 3.9+. Flag any third-party import
+  or 3.10+ syntax (match statements, `X | Y` in runtime positions, PEP 604 in
+  non-annotation code).
+- Nothing under `tests/` or `plugins/**/scripts/` makes network or LLM calls.
+- Every base-rate number in `plugins/humanize/skills/humanize/references/*.md`
+  must trace to `data/storyscope_feature_gaps.csv`. If a PR changes a number,
+  check the CSV row.
+- Reference-doc entries use the exact five-line shape: `### name` /
+  `Looks like:` / `Base rate:` (or `Scan:`) / `Why it reads as AI:` /
+  `Fix: <removal | addition | rebalance> — …`.
+- `SKILL.md` body stays under ~150 lines.
+- The skill, command, and README never claim output is "undetectable", passes
+  a detector, or is "certified human".
+
+## Where bugs hide
+
+- Regexes in `surface_scan.py`: sentence splitting around abbreviations,
+  quotes, ellipses, and initials; tricolon and not-X-but-Y patterns matching
+  clause joins they should not. Ask for a test when a regex changes.
+- Division by zero and empty input in every rate/statistic helper.
+- Test assertions that encode the implementation's current output rather than
+  the intended behavior.
+
+## Do not review
+
+- `data/taxonomy.json` and `data/storyscope_feature_gaps.csv` — verbatim or
+  generated upstream data.
+- Prose content of `tests/fixtures/*.txt` — deliberately AI-like or
+  public-domain human text.
+```
+
+- [ ] **Step 6: Verify the hook fires on commit and commit**
+
+Stage everything and commit; the pre-commit hook must run and pass as part of the commit:
+```bash
+git add pyproject.toml uv.lock .pre-commit-config.yaml .cursor/BUGBOT.md \
+  plugins/humanize/skills/humanize/scripts/surface_scan.py tests/test_surface_scan.py
+git commit -m "$(cat <<'EOF'
+Add uv-managed dev deps, ruff, pre-commit hooks, and Bugbot guide
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KTKYvLEVY4mStJ3iPaB1Mh
+EOF
+)"
+```
+Expected: hook output shows every hook `Passed` (including `pytest`), then the commit lands. If a hook fails, fix the cause and commit again — never `--no-verify`. Include `surface_scan.py` / the test file in the commit only if ruff changed them.
 
 ---
 
@@ -789,7 +952,7 @@ Expected: 33 passed
 
 - [ ] **Step 5: Smoke-run the CLI on this plan file**
 
-Run: `python3 plugins/humanize/skills/humanize/scripts/surface_scan.py --text docs/superpowers/plans/2026-09-13-humanize-plugin.md | head -8`
+Run: `python3 plugins/humanize/skills/humanize/scripts/surface_scan.py --text docs/design/2026-09-13-humanize-plugin.md | head -8`
 Expected: eight summary lines, no traceback.
 
 - [ ] **Step 6: Commit**

@@ -123,3 +123,81 @@ def test_split_sentences_handles_curly_closing_quotes():
     text = f'{left_dq}Go home," she said. {left_dq}Now.{right_dq} He went.{right_dq}'
     expected = [f'{left_dq}Go home," she said.', f"{left_dq}Now.{right_dq}", f"He went.{right_dq}"]
     assert ss.split_sentences(text) == expected
+
+
+def test_punctuation_rates_per_1k():
+    text = "A—b; c: d… e! f -- g 3:00."
+    r = ss.punctuation(text, 100)
+    assert r == {
+        "em_dash": 20.0,
+        "en_dash": 0.0,
+        "semicolon": 10.0,
+        "colon": 10.0,
+        "ellipsis": 10.0,
+        "exclamation": 10.0,
+    }
+
+
+def test_punctuation_counts_three_dot_ellipsis_and_en_dash():
+    r = ss.punctuation("Wait... 1990–1995.", 100)
+    assert r["ellipsis"] == 10.0 and r["en_dash"] == 10.0
+
+
+def test_tricolon_with_and_without_oxford_comma():
+    assert ss.count_tricolons("We value speed, quality, and care.") == 1
+    assert ss.count_tricolons("We value speed, quality and care.") == 1
+    assert ss.count_tricolons("Fast, cheap, or good: pick two.") == 1
+
+
+def test_tricolon_ignores_two_item_lists_and_clause_joins():
+    assert ss.count_tricolons("I went home, and she left.") == 0
+    assert ss.count_tricolons("Speed and quality matter.") == 0
+
+
+def test_not_but_patterns():
+    assert ss.count_not_but("It's not the code, but the culture.") == 1
+    assert ss.count_not_but("It's not the code—it's the culture.") == 1
+    assert ss.count_not_but("This isn't about speed; it's about trust.") == 1
+    assert ss.count_not_but("It's not just about moving data; it's about how we work.") == 1
+    assert ss.count_not_but("Not only did she leave, but she took the dog.") == 1
+    assert ss.count_not_but("She did not leave.") == 0
+
+
+def test_rhetorical_questions_counts_question_then_answer_outside_dialogue():
+    s = [
+        "Why does this matter?",
+        "Because it does.",
+        '"Ready?" he asked.',
+        "She nodded.",
+        "Really?",
+        "Really?",
+    ]
+    assert ss.rhetorical_questions(s) == 1
+
+
+def test_parallel_opener_runs_and_distinct_ratio():
+    s = [
+        "We build.",
+        "We ship.",
+        "We learn.",
+        "Then we rest.",
+        "It works.",
+        "It scales.",
+        "It lasts.",
+    ]
+    assert ss.parallel_opener_runs(s) == 2
+    assert ss.opener_distinct_ratio(s) == round(3 / 7, 3)
+
+
+def test_analyze_includes_punct_structures_openers():
+    r = ss.analyze(
+        "We value speed, quality, and care—always. Why? Because it's not about X, but Y."
+    )
+    assert r["structures"] == {
+        "tricolon": 1,
+        "not_but": 1,
+        "rhetorical_q": 1,
+        "parallel_openers": 0,
+    }
+    assert r["punct"]["em_dash"] > 0
+    assert 0 < r["openers"]["distinct_ratio"] <= 1

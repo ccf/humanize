@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.9+ standard library only (`re`, `statistics`, `json`, `argparse`); pytest for tests; Claude Code plugin/marketplace manifests (JSON) and skill/command markdown.
 
-**Spec:** `docs/superpowers/specs/2026-09-13-humanize-plugin-design.md`
+**Spec:** `docs/design/2026-09-13-humanize-plugin-design.md`
 
 ## Global Constraints
 
@@ -26,6 +26,7 @@
   Claude-Session: https://claude.ai/code/session_01KTKYvLEVY4mStJ3iPaB1Mh
   ```
 - Working directory for all commands: `/Users/ccf/git/humanize`.
+- From Task 1b onward, dependencies are managed by `uv` and pre-commit hooks run on every commit (ruff format, ruff check, pytest, hygiene). Run tests as `uv run pytest -q`. Before committing, run `uv run ruff format . && uv run ruff check --fix .`; if ruff reformats code that a task brief gave verbatim, commit the formatted version — behavior and tests must not change. Never bypass hooks with `--no-verify`.
 
 ---
 
@@ -139,7 +140,14 @@ import surface_scan as ss
 
 
 def test_words_counts_alnum_tokens_with_internal_apostrophes_and_hyphens():
-    assert ss.words("It's a well-known fact — 3 times.") == ["It's", "a", "well-known", "fact", "3", "times"]
+    assert ss.words("It's a well-known fact — 3 times.") == [
+        "It's",
+        "a",
+        "well-known",
+        "fact",
+        "3",
+        "times",
+    ]
 
 
 def test_split_paragraphs_on_blank_lines_and_strips():
@@ -148,7 +156,12 @@ def test_split_paragraphs_on_blank_lines_and_strips():
 
 
 def test_split_sentences_basic():
-    assert ss.split_sentences("I came. I saw! Did I conquer? Yes.") == ["I came.", "I saw!", "Did I conquer?", "Yes."]
+    assert ss.split_sentences("I came. I saw! Did I conquer? Yes.") == [
+        "I came.",
+        "I saw!",
+        "Did I conquer?",
+        "Yes.",
+    ]
 
 
 def test_split_sentences_keeps_abbreviations_together():
@@ -157,7 +170,10 @@ def test_split_sentences_keeps_abbreviations_together():
 
 
 def test_split_sentences_keeps_single_initials_together():
-    assert ss.split_sentences("J. K. Rowling wrote it. It sold.") == ["J. K. Rowling wrote it.", "It sold."]
+    assert ss.split_sentences("J. K. Rowling wrote it. It sold.") == [
+        "J. K. Rowling wrote it.",
+        "It sold.",
+    ]
 
 
 def test_split_sentences_handles_closing_quotes():
@@ -166,11 +182,17 @@ def test_split_sentences_handles_closing_quotes():
 
 
 def test_split_sentences_ellipsis_before_lowercase_does_not_split():
-    assert ss.split_sentences("She waited... and waited. Then left.") == ["She waited... and waited.", "Then left."]
+    assert ss.split_sentences("She waited... and waited. Then left.") == [
+        "She waited... and waited.",
+        "Then left.",
+    ]
 
 
 def test_split_sentences_joins_line_wrapped_paragraph():
-    assert ss.split_sentences("This is one\nsentence wrapped. Second.") == ["This is one sentence wrapped.", "Second."]
+    assert ss.split_sentences("This is one\nsentence wrapped. Second.") == [
+        "This is one sentence wrapped.",
+        "Second.",
+    ]
 
 
 def test_stats_on_values():
@@ -208,6 +230,7 @@ def test_analyze_empty_and_single_sentence_do_not_crash():
 
 def test_main_reads_stdin_and_prints_json(monkeypatch, capsys):
     import io
+
     monkeypatch.setattr("sys.stdin", io.StringIO("Hello there. Bye now."))
     ss.main([])
     out = json.loads(capsys.readouterr().out)
@@ -232,6 +255,7 @@ Expected: FAIL / ERROR with `ModuleNotFoundError: No module named 'surface_scan'
 ```python
 #!/usr/bin/env python3
 """Surface-level prose metrics. Standard library only. Reports numbers, not verdicts."""
+
 from __future__ import annotations
 
 import argparse
@@ -241,8 +265,28 @@ import statistics
 import sys
 
 ABBREVIATIONS = {
-    "dr", "mr", "mrs", "ms", "prof", "sr", "jr", "st", "vs", "etc", "e.g", "i.e",
-    "fig", "inc", "ltd", "co", "u.s", "a.m", "p.m", "approx", "dept", "est",
+    "dr",
+    "mr",
+    "mrs",
+    "ms",
+    "prof",
+    "sr",
+    "jr",
+    "st",
+    "vs",
+    "etc",
+    "e.g",
+    "i.e",
+    "fig",
+    "inc",
+    "ltd",
+    "co",
+    "u.s",
+    "a.m",
+    "p.m",
+    "approx",
+    "dept",
+    "est",
 }
 
 _WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*")
@@ -264,12 +308,12 @@ def split_sentences(text: str) -> list[str]:
         flat = re.sub(r"\s+", " ", para)
         start = 0
         for m in _SENT_END_RE.finditer(flat):
-            prev = re.search(r"(\S+)$", flat[start:m.start()])
+            prev = re.search(r"(\S+)$", flat[start : m.start()])
             tok = prev.group(1).lower().strip("\"'“”‘’()[]") if prev else ""
             is_period = m.group(0)[0] == "."
             if is_period and (tok in ABBREVIATIONS or (len(tok) == 1 and tok.isalpha())):
                 continue
-            out.append(flat[start:m.end()].strip())
+            out.append(flat[start : m.end()].strip())
             start = m.end()
         tail = flat[start:].strip()
         if tail:
@@ -348,6 +392,168 @@ EOF
 
 ---
 
+### Task 1b: Tooling — uv-managed dependencies, ruff, pre-commit, Bugbot guidance
+
+**Files:**
+- Modify: `pyproject.toml` (replace the Task 1 version entirely)
+- Create: `.pre-commit-config.yaml`, `.cursor/BUGBOT.md`
+- Generated and committed: `uv.lock`
+
+**Interfaces:**
+- Consumes: the Task 1 `pyproject.toml`, `surface_scan.py`, and tests.
+- Produces: `uv run pytest -q`, `uv run ruff …`, and `uv run pre-commit …` all work; the git pre-commit hook is installed; every later commit passes ruff format, ruff check, pytest, and hygiene hooks.
+
+- [ ] **Step 1: Replace `pyproject.toml`**
+
+```toml
+[project]
+name = "humanize-plugin"
+version = "0.1.0"
+description = "Claude Code plugin that removes AI tells from prose"
+requires-python = ">=3.9"
+license = "MIT"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4",
+  "pytest>=8",
+  "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+extend-exclude = ["data", "tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+```
+
+`package = false` because this repo is a Claude Code plugin, not an installable Python distribution; `uv` then manages the dev environment without trying to build anything.
+
+- [ ] **Step 2: Create the environment and lockfile**
+
+Run: `uv sync`
+Expected: creates `.venv/` (already git-ignored) and `uv.lock`; installs pytest, ruff, pre-commit. Then `uv run pytest -q` → `16 passed`.
+
+- [ ] **Step 3: Write `.pre-commit-config.yaml`**
+
+```yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(tests/fixtures/|data/)
+      - id: end-of-file-fixer
+        exclude: ^(tests/fixtures/|data/)
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+```
+
+The `rev:` values above are floors. Pin them to current releases with:
+
+Run: `uv run pre-commit autoupdate`
+Expected: both `rev:` lines updated to the latest tags; commit the pinned file.
+
+`tests/fixtures/` and `data/` are excluded from the whitespace fixers because fixture prose and the upstream data files must stay byte-identical.
+
+- [ ] **Step 4: Install the hook and format existing code**
+
+Run:
+```bash
+uv run pre-commit install
+uv run ruff format .
+uv run ruff check --fix .
+uv run pre-commit run --all-files
+```
+Expected: `pre-commit installed at .git/hooks/pre-commit`; ruff may reformat `surface_scan.py` and `tests/test_surface_scan.py` (line wrapping only). Re-run `uv run pre-commit run --all-files` until every hook reports `Passed`. If `ruff check` reports an error it cannot auto-fix, fix it by hand without changing behavior and note it in the report. `uv run pytest -q` must still show `16 passed`.
+
+- [ ] **Step 5: Write `.cursor/BUGBOT.md`**
+
+```markdown
+# Bugbot review guide — humanize
+
+This repo is a Claude Code plugin that audits prose for AI tells and rewrites
+it. Design spec: `docs/design/2026-09-13-humanize-plugin-design.md`.
+
+## Invariants to enforce
+
+- `plugins/humanize/skills/humanize/scripts/surface_scan.py` imports only the
+  Python standard library and runs on Python 3.9+. Flag any third-party import
+  or 3.10+ syntax (match statements, `X | Y` in runtime positions, PEP 604 in
+  non-annotation code).
+- Nothing under `tests/` or `plugins/**/scripts/` makes network or LLM calls.
+- Every base-rate number in `plugins/humanize/skills/humanize/references/*.md`
+  must trace to `data/storyscope_feature_gaps.csv`. If a PR changes a number,
+  check the CSV row.
+- Reference-doc entries use the exact five-line shape: `### name` /
+  `Looks like:` / `Base rate:` (or `Scan:`) / `Why it reads as AI:` /
+  `Fix: <removal | addition | rebalance> — …`.
+- `SKILL.md` body stays under ~150 lines.
+- The skill, command, and README never claim output is "undetectable", passes
+  a detector, or is "certified human".
+
+## Where bugs hide
+
+- Regexes in `surface_scan.py`: sentence splitting around abbreviations,
+  quotes, ellipses, and initials; tricolon and not-X-but-Y patterns matching
+  clause joins they should not. Ask for a test when a regex changes.
+- Division by zero and empty input in every rate/statistic helper.
+- Test assertions that encode the implementation's current output rather than
+  the intended behavior.
+
+## Do not review
+
+- `data/taxonomy.json` and `data/storyscope_feature_gaps.csv` — verbatim or
+  generated upstream data.
+- Prose content of `tests/fixtures/*.txt` — deliberately AI-like or
+  public-domain human text.
+```
+
+- [ ] **Step 6: Verify the hook fires on commit and commit**
+
+Stage everything and commit; the pre-commit hook must run and pass as part of the commit:
+```bash
+git add pyproject.toml uv.lock .pre-commit-config.yaml .cursor/BUGBOT.md \
+  plugins/humanize/skills/humanize/scripts/surface_scan.py tests/test_surface_scan.py
+git commit -m "$(cat <<'EOF'
+Add uv-managed dev deps, ruff, pre-commit hooks, and Bugbot guide
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KTKYvLEVY4mStJ3iPaB1Mh
+EOF
+)"
+```
+Expected: hook output shows every hook `Passed` (including `pytest`), then the commit lands. If a hook fails, fix the cause and commit again — never `--no-verify`. Include `surface_scan.py` / the test file in the commit only if ruff changed them.
+
+---
+
 ### Task 2: Punctuation rates and structural patterns
 
 **Files:**
@@ -364,7 +570,14 @@ EOF
 def test_punctuation_rates_per_1k():
     text = "A—b; c: d… e! f -- g 3:00."
     r = ss.punctuation(text, 100)
-    assert r == {"em_dash": 20.0, "en_dash": 0.0, "semicolon": 10.0, "colon": 10.0, "ellipsis": 10.0, "exclamation": 10.0}
+    assert r == {
+        "em_dash": 20.0,
+        "en_dash": 0.0,
+        "semicolon": 10.0,
+        "colon": 10.0,
+        "ellipsis": 10.0,
+        "exclamation": 10.0,
+    }
 
 
 def test_punctuation_counts_three_dot_ellipsis_and_en_dash():
@@ -393,19 +606,41 @@ def test_not_but_patterns():
 
 
 def test_rhetorical_questions_counts_question_then_answer_outside_dialogue():
-    s = ["Why does this matter?", "Because it does.", '"Ready?" he asked.', "She nodded.", "Really?", "Really?"]
+    s = [
+        "Why does this matter?",
+        "Because it does.",
+        '"Ready?" he asked.',
+        "She nodded.",
+        "Really?",
+        "Really?",
+    ]
     assert ss.rhetorical_questions(s) == 1
 
 
 def test_parallel_opener_runs_and_distinct_ratio():
-    s = ["We build.", "We ship.", "We learn.", "Then we rest.", "It works.", "It scales.", "It lasts."]
+    s = [
+        "We build.",
+        "We ship.",
+        "We learn.",
+        "Then we rest.",
+        "It works.",
+        "It scales.",
+        "It lasts.",
+    ]
     assert ss.parallel_opener_runs(s) == 2
     assert ss.opener_distinct_ratio(s) == round(3 / 7, 3)
 
 
 def test_analyze_includes_punct_structures_openers():
-    r = ss.analyze("We value speed, quality, and care—always. Why? Because it's not about X, but Y.")
-    assert r["structures"] == {"tricolon": 1, "not_but": 1, "rhetorical_q": 1, "parallel_openers": 0}
+    r = ss.analyze(
+        "We value speed, quality, and care—always. Why? Because it's not about X, but Y."
+    )
+    assert r["structures"] == {
+        "tricolon": 1,
+        "not_but": 1,
+        "rhetorical_q": 1,
+        "parallel_openers": 0,
+    }
     assert r["punct"]["em_dash"] > 0
     assert 0 < r["openers"]["distinct_ratio"] <= 1
 ```
@@ -423,8 +658,14 @@ _TRICOLON_RE = re.compile(
     r"\b[\w'’-]+(?: [\w'’-]+){0,4}, [\w'’-]+(?: [\w'’-]+){0,4},? (?:and|or) [\w'’-]+", re.I
 )
 _NOT_BUT_RES = [
-    re.compile(r"\bnot (?:just |only |merely |simply )?[^.;!?]{1,60}?[,;—–-]+ ?(?:but|rather|it'?s|it is)\b", re.I),
-    re.compile(r"\b(?:isn'?t|is not|wasn'?t|was not) (?:just |only |merely )?about [^.;!?]{1,60}?[,;—–-]+ ?(?:it'?s|it is|it was) about\b", re.I),
+    re.compile(
+        r"\bnot (?:just |only |merely |simply )?[^.;!?]{1,60}?[,;—–-]+ ?(?:but|rather|it'?s|it is)\b",
+        re.I,
+    ),
+    re.compile(
+        r"\b(?:isn'?t|is not|wasn'?t|was not) (?:just |only |merely )?about [^.;!?]{1,60}?[,;—–-]+ ?(?:it'?s|it is|it was) about\b",
+        re.I,
+    ),
 ]
 _QUOTE_RE = re.compile(r"[\"“”]")
 
@@ -548,7 +789,12 @@ def test_phrase_hits_is_case_insensitive_word_bounded_and_positioned():
 def test_phrase_hits_multiword_and_apostrophe_terms():
     s = ["It's worth noting that it's a testament to grit.", "Don't hesitate to reach out."]
     hits = ss.phrase_hits(s, ["it's worth noting", "testament to", "don't hesitate", "reach out"])
-    assert [h["term"] for h in hits] == ["don't hesitate", "it's worth noting", "reach out", "testament to"]
+    assert [h["term"] for h in hits] == [
+        "don't hesitate",
+        "it's worth noting",
+        "reach out",
+        "testament to",
+    ]
 
 
 def test_wordlists_are_lowercase_and_deduplicated():
@@ -574,29 +820,116 @@ Expected: 4 failures, `AttributeError` on `phrase_hits` / `AI_WORDLIST`
 
 Add after `opener_distinct_ratio`:
 ```python
-AI_WORDLIST = sorted({
-    "a beacon of", "a testament to", "a wide range of", "at the end of the day", "bustling",
-    "comprehensive", "crucial", "cutting-edge", "deep dive", "delve", "delves", "delving",
-    "dive into", "don't hesitate", "elevate", "embark", "empower", "empowers", "ever-evolving",
-    "foster", "fostering", "fosters", "furthermore", "game-changer", "great question", "harness", "holistic",
-    "i hope this helps", "in conclusion", "in today's fast-paced", "intricate", "it is worth noting",
-    "it's important to note", "it's worth noting", "landscape", "leverage", "leveraging", "meticulous",
-    "meticulously", "moreover", "multifaceted", "navigate the complexities", "navigating the complexities",
-    "nuanced", "paradigm", "pivotal", "plays a crucial role", "reach out", "realm", "resonate",
-    "resonates", "revolutionize", "robust", "seamless", "seamlessly", "shed light", "streamline",
-    "synergy", "tapestry", "testament to", "the world of", "underscore", "underscores", "unlock",
-    "unwavering", "vibrant",
-})
-HEDGES = sorted({
-    "arguably", "generally", "in a sense", "it could be argued", "it seems", "likely", "maybe",
-    "might", "often", "perhaps", "potentially", "somewhat", "tend to", "tends to", "to some extent",
-    "typically",
-})
-INTENSIFIERS = sorted({
-    "absolutely", "certainly", "deeply", "extremely", "genuinely", "highly", "incredibly",
-    "profoundly", "remarkably", "significantly", "truly", "undeniably", "undoubtedly", "utterly",
-    "vastly", "very",
-})
+AI_WORDLIST = sorted(
+    {
+        "a beacon of",
+        "a testament to",
+        "a wide range of",
+        "at the end of the day",
+        "bustling",
+        "comprehensive",
+        "crucial",
+        "cutting-edge",
+        "deep dive",
+        "delve",
+        "delves",
+        "delving",
+        "dive into",
+        "don't hesitate",
+        "elevate",
+        "embark",
+        "empower",
+        "empowers",
+        "ever-evolving",
+        "foster",
+        "fostering",
+        "fosters",
+        "furthermore",
+        "game-changer",
+        "great question",
+        "harness",
+        "holistic",
+        "i hope this helps",
+        "in conclusion",
+        "in today's fast-paced",
+        "intricate",
+        "it is worth noting",
+        "it's important to note",
+        "it's worth noting",
+        "landscape",
+        "leverage",
+        "leveraging",
+        "meticulous",
+        "meticulously",
+        "moreover",
+        "multifaceted",
+        "navigate the complexities",
+        "navigating the complexities",
+        "nuanced",
+        "paradigm",
+        "pivotal",
+        "plays a crucial role",
+        "reach out",
+        "realm",
+        "resonate",
+        "resonates",
+        "revolutionize",
+        "robust",
+        "seamless",
+        "seamlessly",
+        "shed light",
+        "streamline",
+        "synergy",
+        "tapestry",
+        "testament to",
+        "the world of",
+        "underscore",
+        "underscores",
+        "unlock",
+        "unwavering",
+        "vibrant",
+    }
+)
+HEDGES = sorted(
+    {
+        "arguably",
+        "generally",
+        "in a sense",
+        "it could be argued",
+        "it seems",
+        "likely",
+        "maybe",
+        "might",
+        "often",
+        "perhaps",
+        "potentially",
+        "somewhat",
+        "tend to",
+        "tends to",
+        "to some extent",
+        "typically",
+    }
+)
+INTENSIFIERS = sorted(
+    {
+        "absolutely",
+        "certainly",
+        "deeply",
+        "extremely",
+        "genuinely",
+        "highly",
+        "incredibly",
+        "profoundly",
+        "remarkably",
+        "significantly",
+        "truly",
+        "undeniably",
+        "undoubtedly",
+        "utterly",
+        "vastly",
+        "very",
+    }
+)
 
 
 def _term_re(term: str) -> re.Pattern:
@@ -677,8 +1010,18 @@ def test_summary_closer_true_when_a_closing_paragraph_restates_the_body():
 
 
 def test_summary_closer_false_without_closer_phrase_or_overlap():
-    assert ss.summary_closer(["Plan covers replication.", "Details.", "More.", "Ultimately, cats are great."]) is False
-    assert ss.summary_closer(["Plan covers replication.", "Details.", "More.", "The replication plan is set."]) is False
+    assert (
+        ss.summary_closer(
+            ["Plan covers replication.", "Details.", "More.", "Ultimately, cats are great."]
+        )
+        is False
+    )
+    assert (
+        ss.summary_closer(
+            ["Plan covers replication.", "Details.", "More.", "The replication plan is set."]
+        )
+        is False
+    )
     assert ss.summary_closer(["Only.", "Two."]) is False
 
 
@@ -691,12 +1034,23 @@ def test_dialogue_ratio():
 def test_summarize_mentions_key_metrics():
     r = ss.analyze("We leverage a robust, seamless, and pivotal platform—daily. Perhaps.")
     s = ss.summarize(r)
-    for needle in ("words", "sentence length", "cv", "em-dash", "tricolon", "leverage", "hedges", "summary closer", "dialogue"):
+    for needle in (
+        "words",
+        "sentence length",
+        "cv",
+        "em-dash",
+        "tricolon",
+        "leverage",
+        "hedges",
+        "summary closer",
+        "dialogue",
+    ):
         assert needle in s, needle
 
 
 def test_main_text_flag_prints_summary_not_json(monkeypatch, capsys):
     import io
+
     monkeypatch.setattr("sys.stdin", io.StringIO("Hello there. Bye now."))
     ss.main(["--text"])
     out = capsys.readouterr().out
@@ -713,8 +1067,16 @@ Expected: 5 failures (`AttributeError` on `summary_closer`, `dialogue_ratio`, `s
 Add after `_rate_of`:
 ```python
 CLOSERS = (
-    "all in all", "in closing", "in conclusion", "in short", "in summary", "in the end",
-    "overall", "to conclude", "to sum up", "ultimately",
+    "all in all",
+    "in closing",
+    "in conclusion",
+    "in short",
+    "in summary",
+    "in the end",
+    "overall",
+    "to conclude",
+    "to sum up",
+    "ultimately",
 )
 _STOPWORDS = set(
     "about above after again also among because before being between could every first found "
@@ -753,19 +1115,21 @@ def dialogue_ratio(paragraphs: list[str]) -> float:
 def summarize(r: dict) -> str:
     sl, pl, pu, st = r["sentence_len"], r["paragraph_len"], r["punct"], r["structures"]
     top = ", ".join(f"{h['term']}×{h['count']}" for h in r["wordlist"]["hits"][:8]) or "none"
-    return "\n".join([
-        f"words {r['words']} · sentences {r['sentences']} · paragraphs {r['paragraphs']}",
-        f"sentence length: mean {sl['mean']}, stdev {sl['stdev']}, cv {sl['cv']} (min {sl['min']}, max {sl['max']})",
-        f"paragraph length: mean {pl['mean']} sentences, cv {pl['cv']}",
-        f"per 1k words: em-dash {pu['em_dash']} · semicolon {pu['semicolon']} · colon {pu['colon']} · "
-        f"ellipsis {pu['ellipsis']} · exclamation {pu['exclamation']}",
-        f"structures: tricolon {st['tricolon']} · not-but {st['not_but']} · rhetorical-q {st['rhetorical_q']} · "
-        f"parallel-opener runs {st['parallel_openers']} · distinct openers {r['openers']['distinct_ratio']}",
-        f"wordlist: {r['wordlist']['rate']}/1k — {top}",
-        f"hedges {r['hedges']['rate']}/1k · intensifiers {r['intensifiers']['rate']}/1k",
-        f"summary closer: {'yes' if r['discourse']['summary_closer'] else 'no'} · "
-        f"dialogue paragraphs: {round(r['dialogue']['ratio'] * 100)}%",
-    ])
+    return "\n".join(
+        [
+            f"words {r['words']} · sentences {r['sentences']} · paragraphs {r['paragraphs']}",
+            f"sentence length: mean {sl['mean']}, stdev {sl['stdev']}, cv {sl['cv']} (min {sl['min']}, max {sl['max']})",
+            f"paragraph length: mean {pl['mean']} sentences, cv {pl['cv']}",
+            f"per 1k words: em-dash {pu['em_dash']} · semicolon {pu['semicolon']} · colon {pu['colon']} · "
+            f"ellipsis {pu['ellipsis']} · exclamation {pu['exclamation']}",
+            f"structures: tricolon {st['tricolon']} · not-but {st['not_but']} · rhetorical-q {st['rhetorical_q']} · "
+            f"parallel-opener runs {st['parallel_openers']} · distinct openers {r['openers']['distinct_ratio']}",
+            f"wordlist: {r['wordlist']['rate']}/1k — {top}",
+            f"hedges {r['hedges']['rate']}/1k · intensifiers {r['intensifiers']['rate']}/1k",
+            f"summary closer: {'yes' if r['discourse']['summary_closer'] else 'no'} · "
+            f"dialogue paragraphs: {round(r['dialogue']['ratio'] * 100)}%",
+        ]
+    )
 ```
 
 In `analyze`, add to the returned dict:
@@ -789,7 +1153,7 @@ Expected: 33 passed
 
 - [ ] **Step 5: Smoke-run the CLI on this plan file**
 
-Run: `python3 plugins/humanize/skills/humanize/scripts/surface_scan.py --text docs/superpowers/plans/2026-09-13-humanize-plugin.md | head -8`
+Run: `python3 plugins/humanize/skills/humanize/scripts/surface_scan.py --text docs/design/2026-09-13-humanize-plugin.md | head -8`
 Expected: eight summary lines, no traceback.
 
 - [ ] **Step 6: Commit**
@@ -1082,6 +1446,7 @@ Usage: python3 tools/gen_tell_scaffold.py style|narrative
 Selection: categorical/ordinal/binary/multi-select kept if |gap| >= 15 points;
 scale kept if |gap| >= 0.30. Authors fill the Looks-like / Why / Fix lines by hand.
 """
+
 import csv
 import json
 import sys
@@ -1098,7 +1463,9 @@ def keep(row: dict) -> bool:
 def load():
     rows = list(csv.DictReader(open(ROOT / "data/storyscope_feature_gaps.csv", encoding="utf-8")))
     tax = json.load(open(ROOT / "data/taxonomy.json", encoding="utf-8"))["feature_taxonomy"]
-    questions = {f["id"]: f for d in tax.values() for a in d["aspects"].values() for f in a["features"]}
+    questions = {
+        f["id"]: f for d in tax.values() for a in d["aspects"].values() for f in a["features"]
+    }
     return rows, questions
 
 
@@ -1685,7 +2052,9 @@ def test_ai_email_fires_the_obvious_surface_tells():
     assert r["discourse"]["summary_closer"] is True
     assert r["structures"]["not_but"] >= 1
     assert r["structures"]["tricolon"] >= 3
-    assert {"great question", "leveraging", "seamless", "reach out", "don't hesitate"} <= {h["term"] for h in r["wordlist"]["hits"]}
+    assert {"great question", "leveraging", "seamless", "reach out", "don't hesitate"} <= {
+        h["term"] for h in r["wordlist"]["hits"]
+    }
 
 
 def test_human_email_is_quiet_on_the_wordlist():
@@ -1797,7 +2166,13 @@ def test_marketplace_points_at_existing_plugin_components():
         assert (src / rel).exists(), rel
     assert (src / "skills/humanize/SKILL.md").is_file()
     assert (src / "skills/humanize/scripts/surface_scan.py").is_file()
-    for doc in ("principles", "surface-tells", "style-tells", "narrative-tells", "model-fingerprints"):
+    for doc in (
+        "principles",
+        "surface-tells",
+        "style-tells",
+        "narrative-tells",
+        "model-fingerprints",
+    ):
         assert (src / f"skills/humanize/references/{doc}.md").is_file(), doc
 
 

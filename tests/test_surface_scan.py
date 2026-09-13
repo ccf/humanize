@@ -4,7 +4,14 @@ import surface_scan as ss
 
 
 def test_words_counts_alnum_tokens_with_internal_apostrophes_and_hyphens():
-    assert ss.words("It's a well-known fact — 3 times.") == ["It's", "a", "well-known", "fact", "3", "times"]
+    assert ss.words("It's a well-known fact — 3 times.") == [
+        "It's",
+        "a",
+        "well-known",
+        "fact",
+        "3",
+        "times",
+    ]
 
 
 def test_split_paragraphs_on_blank_lines_and_strips():
@@ -13,7 +20,12 @@ def test_split_paragraphs_on_blank_lines_and_strips():
 
 
 def test_split_sentences_basic():
-    assert ss.split_sentences("I came. I saw! Did I conquer? Yes.") == ["I came.", "I saw!", "Did I conquer?", "Yes."]
+    assert ss.split_sentences("I came. I saw! Did I conquer? Yes.") == [
+        "I came.",
+        "I saw!",
+        "Did I conquer?",
+        "Yes.",
+    ]
 
 
 def test_split_sentences_keeps_abbreviations_together():
@@ -22,7 +34,10 @@ def test_split_sentences_keeps_abbreviations_together():
 
 
 def test_split_sentences_keeps_single_initials_together():
-    assert ss.split_sentences("J. K. Rowling wrote it. It sold.") == ["J. K. Rowling wrote it.", "It sold."]
+    assert ss.split_sentences("J. K. Rowling wrote it. It sold.") == [
+        "J. K. Rowling wrote it.",
+        "It sold.",
+    ]
 
 
 def test_split_sentences_handles_closing_quotes():
@@ -31,11 +46,17 @@ def test_split_sentences_handles_closing_quotes():
 
 
 def test_split_sentences_ellipsis_before_lowercase_does_not_split():
-    assert ss.split_sentences("She waited... and waited. Then left.") == ["She waited... and waited.", "Then left."]
+    assert ss.split_sentences("She waited... and waited. Then left.") == [
+        "She waited... and waited.",
+        "Then left.",
+    ]
 
 
 def test_split_sentences_joins_line_wrapped_paragraph():
-    assert ss.split_sentences("This is one\nsentence wrapped. Second.") == ["This is one sentence wrapped.", "Second."]
+    assert ss.split_sentences("This is one\nsentence wrapped. Second.") == [
+        "This is one sentence wrapped.",
+        "Second.",
+    ]
 
 
 def test_stats_on_values():
@@ -73,6 +94,7 @@ def test_analyze_empty_and_single_sentence_do_not_crash():
 
 def test_main_reads_stdin_and_prints_json(monkeypatch, capsys):
     import io
+
     monkeypatch.setattr("sys.stdin", io.StringIO("Hello there. Bye now."))
     ss.main([])
     out = json.loads(capsys.readouterr().out)
@@ -99,9 +121,5 @@ def test_split_sentences_handles_curly_closing_quotes():
     left_dq = chr(0x201C)
     right_dq = chr(0x201D)
     text = f'{left_dq}Go home," she said. {left_dq}Now.{right_dq} He went.{right_dq}'
-    expected = [
-        f'{left_dq}Go home," she said.',
-        f'{left_dq}Now.{right_dq}',
-        f'He went.{right_dq}'
-    ]
+    expected = [f'{left_dq}Go home," she said.', f"{left_dq}Now.{right_dq}", f"He went.{right_dq}"]
     assert ss.split_sentences(text) == expected

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Surface-level prose metrics. Standard library only. Reports numbers, not verdicts."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,8 +10,28 @@ import statistics
 import sys
 
 ABBREVIATIONS = {
-    "dr", "mr", "mrs", "ms", "prof", "sr", "jr", "st", "vs", "etc", "e.g", "i.e",
-    "fig", "inc", "ltd", "co", "u.s", "a.m", "p.m", "approx", "dept", "est",
+    "dr",
+    "mr",
+    "mrs",
+    "ms",
+    "prof",
+    "sr",
+    "jr",
+    "st",
+    "vs",
+    "etc",
+    "e.g",
+    "i.e",
+    "fig",
+    "inc",
+    "ltd",
+    "co",
+    "u.s",
+    "a.m",
+    "p.m",
+    "approx",
+    "dept",
+    "est",
 }
 
 _WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*")
@@ -32,12 +53,12 @@ def split_sentences(text: str) -> list[str]:
         flat = re.sub(r"\s+", " ", para)
         start = 0
         for m in _SENT_END_RE.finditer(flat):
-            prev = re.search(r"(\S+)$", flat[start:m.start()])
+            prev = re.search(r"(\S+)$", flat[start : m.start()])
             tok = prev.group(1).lower().strip("\"'“”‘’()[]") if prev else ""
             is_period = m.group(0)[0] == "."
             if is_period and (tok in ABBREVIATIONS or (len(tok) == 1 and tok.isalpha())):
                 continue
-            out.append(flat[start:m.end()].strip())
+            out.append(flat[start : m.end()].strip())
             start = m.end()
         tail = flat[start:].strip()
         if tail:

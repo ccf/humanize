@@ -104,9 +104,10 @@ tests/                           pytest; no network, no LLM calls
 ## Development
 
 ```
-python3 -m pytest
+uv sync
+uv run pytest -q
 claude plugin validate .
-python3 plugins/humanize/skills/humanize/scripts/surface_scan.py --text some.txt
+uv run python plugins/humanize/skills/humanize/scripts/surface_scan.py --text some.txt
 ```
 
 `tests/fixtures/expected_tells.md` is a manual checklist: run

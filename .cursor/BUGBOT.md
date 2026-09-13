@@ -15,7 +15,8 @@ it. Design spec: `docs/design/2026-09-13-humanize-plugin-design.md`.
   check the CSV row.
 - Reference-doc entries use the exact five-line shape: `### name` /
   `Looks like:` / `Base rate:` (or `Scan:`) / `Why it reads as AI:` /
-  `Fix: <removal | addition | rebalance> — …`.
+  `Fix: <removal | addition | rebalance> — …`, plus a sixth `Outside fiction:`
+  line on every entry in style-tells.md.
 - `SKILL.md` body stays under ~150 lines.
 - The skill, command, and README never claim output is "undetectable", passes
   a detector, or is "certified human".

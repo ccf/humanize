@@ -45,7 +45,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/humanize/scripts/surface_scan.py" --text <
 ```
 
 Write pasted text to a temp file first. For the full JSON, drop `--text`. Under
-80 words, skip this step; the statistics are noise.
+80 words, skip this step; the statistics are noise. The scanner strips code,
+links, URLs, and heading markers from Markdown before measuring.
 
 ### 3. Audit
 
@@ -55,7 +56,8 @@ Walk every loaded tell list. For each tell you judge present, record:
 - one quoted example from the text (add `(×N)` if it recurs)
 - the base rate line from the reference, or the scan number
 
-Rank by strength of evidence. Report **at most ten**. Format:
+Rank by strength of evidence. Report **at most ten**. For texts under ~300
+words, quote raw counts from `punct.counts`, not per-1k rates. Format:
 
 ```
 | # | Tell | Evidence | Base rate / metric |

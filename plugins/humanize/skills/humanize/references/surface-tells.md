@@ -15,7 +15,9 @@ Looks like: "delve", "tapestry", "a testament to", "navigate the complexities",
 "meticulous", "harness", "synergy", "holistic", "streamline", "elevate",
 "empower", "unlock", "resonate", "realm", "beacon", "unwavering".
 Scan: `wordlist.rate` per 1k words and `wordlist.hits` with sentence positions.
-Rule of thumb: human drafts usually < 3/1k; AI drafts often 8–25/1k.
+Rule of thumb: human drafts usually < 3/1k; AI drafts commonly 10–30/1k in
+long-form prose and can exceed 60/1k in short business emails, where
+boilerplate dominates.
 Why it reads as AI: these words are over-represented in RLHF-era model output
 and under-represented in ordinary human prose of the same register; readers
 have learned the list.
@@ -55,7 +57,10 @@ detail that earns the emphasis.
 ### Em-dash density
 Looks like: "The plan—while ambitious—was sound—and it worked."
 Scan: `punct.em_dash` per 1k. Rule of thumb: human nonfiction 0–4/1k; AI
-drafts often 8–20/1k.
+drafts often 8–20/1k. Per-1k rates need roughly 300+ words to mean anything;
+below that, cite the raw count (`punct.counts.em_dash`) and treat one or two
+marks as noise. CLI flags like `--audit-only` are not counted; only `word--word`
+or spaced ` -- ` forms count as an em-dash.
 Why it reads as AI: models use the em-dash as a universal joiner where a human
 would use a comma, a period, or parentheses, and they use it in every paragraph.
 Fix: rebalance — keep one em-dash where it does real work; convert the rest to
@@ -75,7 +80,8 @@ Fix: rebalance — in casual registers, split into two sentences.
 Looks like: "fast, reliable, and secure"; "we build, we ship, we learn"; every
 list has exactly three items.
 Scan: `structures.tricolon` count. Rule of thumb: more than one per 150 words
-is a habit, not a choice.
+is a habit, not a choice. Counts any `A, B, and C` sequence, including clause
+joins; treat the number as a prompt to look, not a verdict.
 Why it reads as AI: the three-item list is rhythmically satisfying and the model
 reaches for it reflexively; humans produce two- and four-item lists as often.
 Fix: rebalance — cut one item, add a fourth, or make one item a sentence of its

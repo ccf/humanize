@@ -34,9 +34,29 @@ ABBREVIATIONS = {
     "est",
 }
 
-_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*")
+_WORD_RE = re.compile(r"[^\W_]+(?:['’-][^\W_]+)*")
 _PARA_SPLIT_RE = re.compile(r"\n\s*\n")
 _SENT_END_RE = re.compile(r"[.!?]+[\"'”’)\]]*(?=\s+[\"'“‘(\[]*[A-Z0-9])")
+
+_FENCED_CODE_RE = re.compile(r"```.*?```", re.S)
+_INLINE_CODE_RE = re.compile(r"`[^`]*`")
+_ATX_HEADING_RE = re.compile(r"^#{1,6}\s+", re.M)
+_MD_LINK_RE = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+_BARE_URL_RE = re.compile(r"https?://\S+")
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def strip_markdown(text: str) -> str:
+    """Strip Markdown/HTML scaffolding that would otherwise pollute word and
+    punctuation counts: fenced code, inline code, ATX headings, links/images,
+    bare URLs, and HTML tags. Emphasis markers are left alone."""
+    text = _FENCED_CODE_RE.sub("", text)
+    text = _INLINE_CODE_RE.sub("", text)
+    text = _ATX_HEADING_RE.sub("", text)
+    text = _MD_LINK_RE.sub(r"\1", text)
+    text = _BARE_URL_RE.sub("", text)
+    text = _HTML_TAG_RE.sub("", text)
+    return text
 
 
 def words(text: str) -> list[str]:
@@ -87,31 +107,72 @@ def per_1k(count: int, n_words: int) -> float:
 _TRICOLON_RE = re.compile(
     r"\b[\w'’-]+(?: [\w'’-]+){0,4}, [\w'’-]+(?: [\w'’-]+){0,4},? (?:and|or) [\w'’-]+", re.I
 )
-_NOT_BUT_RES = [
-    re.compile(
-        r"\bnot (?:just |only |merely |simply )?[^.;!?]{1,60}?[,;—–-]+ ?"
-        r"(?:but|rather|it'?s|it is)\b",
-        re.I,
-    ),
-    re.compile(
-        r"\b(?:isn'?t|is not|wasn'?t|was not) (?:just |only |merely )?about "
-        r"[^.;!?]{1,60}?[,;—–-]+ ?(?:it'?s|it is|it was) about\b",
-        re.I,
-    ),
-]
+_NOT_BUT_RE = re.compile(
+    r"\bnot (?:just |only |merely |simply )?(?P<x>[^.;!?]{1,60}?)[,;—–-]+ ?"
+    r"(?:but|rather|it'?s|it is)\b",
+    re.I,
+)
+_NOT_BUT_ISNT_ABOUT_RE = re.compile(
+    r"\b(?:isn'?t|is not|wasn'?t|was not) (?:just |only |merely )?about "
+    r"[^.;!?]{1,60}?[,;—–-]+ ?(?:it'?s|it is|it was) about\b",
+    re.I,
+)
+_AUX_BEFORE_NOT_RE = re.compile(r"(\w+)\W*$")
+AUXILIARIES = {
+    "did",
+    "do",
+    "does",
+    "was",
+    "were",
+    "is",
+    "are",
+    "am",
+    "have",
+    "has",
+    "had",
+    "could",
+    "would",
+    "should",
+    "will",
+    "can",
+    "must",
+    "might",
+    "may",
+}
+FRAME_OPENERS = {
+    "the",
+    "a",
+    "an",
+    "about",
+    "that",
+    "this",
+    "these",
+    "those",
+    "what",
+    "because",
+    "so",
+    "just",
+    "only",
+    "merely",
+    "simply",
+    "even",
+    "really",
+}
 _QUOTE_RE = re.compile(r"[\"“”]")
+_EM_DASH_DOUBLE_HYPHEN_RE = re.compile(r"(?<=\w)--(?=\w)|(?<=\s)--(?=\s)")
 
 
 def punctuation(text: str, n_words: int) -> dict:
     counts = {
-        "em_dash": text.count("—") + len(re.findall(r"(?<!-)--(?!-)", text)),
+        "em_dash": text.count("—") + len(_EM_DASH_DOUBLE_HYPHEN_RE.findall(text)),
         "en_dash": text.count("–"),
         "semicolon": text.count(";"),
         "colon": len(re.findall(r":(?!\d)", text)),
         "ellipsis": text.count("…") + len(re.findall(r"(?<!\.)\.\.\.(?!\.)", text)),
         "exclamation": text.count("!"),
     }
-    return {k: per_1k(v, n_words) for k, v in counts.items()}
+    rates = {k: per_1k(v, n_words) for k, v in counts.items()}
+    return {**rates, "counts": counts}
 
 
 def count_tricolons(text: str) -> int:
@@ -119,7 +180,18 @@ def count_tricolons(text: str) -> int:
 
 
 def count_not_but(text: str) -> int:
-    return sum(len(rx.findall(text)) for rx in _NOT_BUT_RES)
+    count = 0
+    for m in _NOT_BUT_RE.finditer(text):
+        prefix = text[: m.start()]
+        aux_m = _AUX_BEFORE_NOT_RE.search(prefix)
+        aux = aux_m.group(1).lower() if aux_m else ""
+        x_words = words(m.group("x"))
+        x_first = x_words[0].lower() if x_words else ""
+        if aux in AUXILIARIES and x_first not in FRAME_OPENERS:
+            continue
+        count += 1
+    count += len(_NOT_BUT_ISNT_ABOUT_RE.findall(text))
+    return count
 
 
 def rhetorical_questions(sentences: list[str]) -> int:
@@ -297,6 +369,7 @@ CLOSERS = (
     "to sum up",
     "ultimately",
 )
+_ONE_WORD_CLOSERS = {"overall", "ultimately"}
 _STOPWORDS = set(
     "about above after again also among because before being between could every first found "
     "great however little might never other should since still their there these thing think "
@@ -312,11 +385,14 @@ def _content_words(text: str) -> set[str]:
 def summary_closer(paragraphs: list[str]) -> bool:
     """A paragraph among the last three opens with a closer phrase and restates the body
     before it."""
-    if len(paragraphs) < 3:
+    if len(paragraphs) < 2:
         return False
     for idx in range(max(1, len(paragraphs) - 3), len(paragraphs)):
         head = paragraphs[idx].lower().lstrip("*_#> ")
-        if not any(head.startswith(c) for c in CLOSERS):
+        if not any(
+            head.startswith(c + ",") if c in _ONE_WORD_CLOSERS else head.startswith(c)
+            for c in CLOSERS
+        ):
             continue
         body: set[str] = set()
         for earlier in paragraphs[:idx]:
@@ -335,14 +411,24 @@ def dialogue_ratio(paragraphs: list[str]) -> float:
 def summarize(r: dict) -> str:
     sl, pl, pu, st = r["sentence_len"], r["paragraph_len"], r["punct"], r["structures"]
     top = ", ".join(f"{h['term']}×{h['count']}" for h in r["wordlist"]["hits"][:8]) or "none"
+    punct_line = " · ".join(
+        f"{label} {pu[key]} ({pu['counts'][key]})"
+        for label, key in (
+            ("em-dash", "em_dash"),
+            ("en-dash", "en_dash"),
+            ("semicolon", "semicolon"),
+            ("colon", "colon"),
+            ("ellipsis", "ellipsis"),
+            ("exclamation", "exclamation"),
+        )
+    )
     return "\n".join(
         [
             f"words {r['words']} · sentences {r['sentences']} · paragraphs {r['paragraphs']}",
             f"sentence length: mean {sl['mean']}, stdev {sl['stdev']}, cv {sl['cv']} "
             f"(min {sl['min']}, max {sl['max']})",
-            f"paragraph length: mean {pl['mean']} sentences, cv {pl['cv']}",
-            f"per 1k words: em-dash {pu['em_dash']} · semicolon {pu['semicolon']} · "
-            f"colon {pu['colon']} · ellipsis {pu['ellipsis']} · exclamation {pu['exclamation']}",
+            f"paragraph length: mean {pl['mean']} sentences, stdev {pl['stdev']}, cv {pl['cv']}",
+            f"per 1k words: {punct_line}",
             f"structures: tricolon {st['tricolon']} · not-but {st['not_but']} · "
             f"rhetorical-q {st['rhetorical_q']} · parallel-opener runs {st['parallel_openers']} · "
             f"distinct openers {r['openers']['distinct_ratio']}",
@@ -355,6 +441,7 @@ def summarize(r: dict) -> str:
 
 
 def analyze(text: str) -> dict:
+    text = strip_markdown(text)
     paras = split_paragraphs(text)
     sents = split_sentences(text)
     n_words = len(words(text))
@@ -387,8 +474,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--text", action="store_true", help="print a short summary instead of JSON")
     args = parser.parse_args(argv)
     if args.path:
-        with open(args.path, encoding="utf-8") as fh:
-            text = fh.read()
+        try:
+            with open(args.path, encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError as e:
+            print(f"surface_scan: cannot read {args.path}: {e.strerror}", file=sys.stderr)
+            sys.exit(1)
     else:
         text = sys.stdin.read()
     result = analyze(text)

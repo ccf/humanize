@@ -14,6 +14,19 @@ def test_words_counts_alnum_tokens_with_internal_apostrophes_and_hyphens():
     ]
 
 
+def test_words_is_unicode_aware():
+    text = f"The café was naïve about Beyoncé{chr(0x2019)}s résumé."
+    assert ss.words(text) == [
+        "The",
+        "café",
+        "was",
+        "naïve",
+        "about",
+        f"Beyoncé{chr(0x2019)}s",
+        "résumé",
+    ]
+
+
 def test_split_paragraphs_on_blank_lines_and_strips():
     text = "One.\n\nTwo two.\n   \nThree.\n"
     assert ss.split_paragraphs(text) == ["One.", "Two two.", "Three."]
@@ -128,13 +141,21 @@ def test_split_sentences_handles_curly_closing_quotes():
 def test_punctuation_rates_per_1k():
     text = "A—b; c: d… e! f -- g 3:00."
     r = ss.punctuation(text, 100)
-    assert r == {
+    assert {k: v for k, v in r.items() if k != "counts"} == {
         "em_dash": 20.0,
         "en_dash": 0.0,
         "semicolon": 10.0,
         "colon": 10.0,
         "ellipsis": 10.0,
         "exclamation": 10.0,
+    }
+    assert r["counts"] == {
+        "em_dash": 2,
+        "en_dash": 0,
+        "semicolon": 1,
+        "colon": 1,
+        "ellipsis": 1,
+        "exclamation": 1,
     }
 
 
@@ -161,6 +182,16 @@ def test_not_but_patterns():
     assert ss.count_not_but("It's not just about moving data; it's about how we work.") == 1
     assert ss.count_not_but("Not only did she leave, but she took the dog.") == 1
     assert ss.count_not_but("She did not leave.") == 0
+
+
+def test_not_but_ignores_plain_verb_negation_with_aux_before_not():
+    assert ss.count_not_but("I did not go to the party, but I heard about it.") == 0
+    assert ss.count_not_but("The team did not ship on Friday, but Monday worked.") == 0
+    assert ss.count_not_but("She was not happy - it's complicated.") == 0
+
+
+def test_not_but_still_fires_when_x_starts_with_a_frame_opener():
+    assert ss.count_not_but("The problem is not the code, but the culture.") == 1
 
 
 def test_rhetorical_questions_counts_question_then_answer_outside_dialogue():
@@ -265,6 +296,38 @@ def test_summary_closer_false_without_closer_phrase_or_overlap():
     assert ss.summary_closer(["Only.", "Two."]) is False
 
 
+def test_summary_closer_true_on_two_paragraphs_when_second_restates_first():
+    assert (
+        ss.summary_closer(
+            [
+                "The migration slipped because the vendor API changed.",
+                "In short, the migration and the vendor API are the schedule problem.",
+            ]
+        )
+        is True
+    )
+
+
+def test_summary_closer_one_word_closers_require_a_comma():
+    assert (
+        ss.summary_closer(["Costs rose.", "Details.", "Overall performance improved 12% on costs."])
+        is False
+    )
+    assert (
+        ss.summary_closer(
+            [
+                "The migration plan covers database replication and the auth service rewrite.",
+                "Details follow.",
+                "More details.",
+                "Ultimately, the migration plan succeeds when replication and the auth service "
+                "land together.",
+                "Best,\nJordan",
+            ]
+        )
+        is True
+    )
+
+
 def test_dialogue_ratio():
     paras = ['"Hi," she said.', "He waved.", "“Bye.”", "Silence."]
     assert ss.dialogue_ratio(paras) == 0.5
@@ -295,3 +358,35 @@ def test_main_text_flag_prints_summary_not_json(monkeypatch, capsys):
     ss.main(["--text"])
     out = capsys.readouterr().out
     assert out.startswith("words") and "{" not in out
+
+
+def test_main_exits_with_error_on_unreadable_path(capsys):
+    import pytest
+
+    with pytest.raises(SystemExit):
+        ss.main(["/no/such/path/does-not-exist.txt"])
+    assert "cannot read" in capsys.readouterr().err
+
+
+def test_strip_markdown_removes_code_links_headings_and_urls():
+    text = (
+        "# Title\n\n"
+        "See [the docs](https://x.io/a:b) and `code: x` here.\n\n"
+        "```py\nx: int = 1\n```\n"
+    )
+    stripped = ss.strip_markdown(text)
+    ws = ss.words(stripped)
+    assert "Title" in ws and "the" in ws and "docs" in ws
+    assert "https" not in ws and "int" not in ws
+    r = ss.analyze(text)
+    assert r["punct"]["counts"]["colon"] == 0
+
+
+def test_double_dash_em_dash_excludes_cli_flags():
+    r = ss.punctuation("Use the --audit-only flag and the --fiction flag.", 100)
+    assert r["counts"]["em_dash"] == 0
+
+
+def test_double_dash_em_dash_counts_word_and_spaced_forms():
+    r = ss.punctuation("A -- b and c--d.", 100)
+    assert r["counts"]["em_dash"] == 2

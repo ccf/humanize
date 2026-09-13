@@ -10,6 +10,7 @@ def _scan(name: str) -> dict:
     return ss.analyze((FIX / name).read_text(encoding="utf-8"))
 
 
+# Known: the fiction pair passes at exactly 3/4 (tricolon count ties 3–3 on prompt_id 411).
 @pytest.mark.parametrize(
     "ai,human",
     [("ai_email.txt", "human_email.txt"), ("ai_fiction_excerpt.txt", "human_fiction_excerpt.txt")],

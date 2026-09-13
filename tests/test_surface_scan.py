@@ -184,6 +184,16 @@ def test_not_but_patterns():
     assert ss.count_not_but("She did not leave.") == 0
 
 
+def test_not_but_counts_overlapping_patterns_once():
+    assert ss.count_not_but("It is not about speed; it is about trust.") == 1
+    assert (
+        ss.count_not_but(
+            "It is not about speed; it is about trust. It's not the code, but the culture."
+        )
+        == 2
+    )
+
+
 def test_not_but_ignores_plain_verb_negation_with_aux_before_not():
     assert ss.count_not_but("I did not go to the party, but I heard about it.") == 0
     assert ss.count_not_but("The team did not ship on Friday, but Monday worked.") == 0

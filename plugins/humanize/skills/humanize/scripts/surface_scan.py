@@ -180,8 +180,11 @@ def count_tricolons(text: str) -> int:
 
 
 def count_not_but(text: str) -> int:
-    count = 0
+    about_spans = [m.span() for m in _NOT_BUT_ISNT_ABOUT_RE.finditer(text)]
+    count = len(about_spans)
     for m in _NOT_BUT_RE.finditer(text):
+        if any(m.start() < end and m.end() > start for start, end in about_spans):
+            continue
         prefix = text[: m.start()]
         aux_m = _AUX_BEFORE_NOT_RE.search(prefix)
         aux = aux_m.group(1).lower() if aux_m else ""
@@ -190,7 +193,6 @@ def count_not_but(text: str) -> int:
         if aux in AUXILIARIES and x_first not in FRAME_OPENERS:
             continue
         count += 1
-    count += len(_NOT_BUT_ISNT_ABOUT_RE.findall(text))
     return count
 
 

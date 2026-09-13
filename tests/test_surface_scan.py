@@ -186,6 +186,8 @@ def test_not_but_patterns():
 
 def test_not_but_counts_overlapping_patterns_once():
     assert ss.count_not_but("It is not about speed; it is about trust.") == 1
+    # Adjacent constructions sharing only the closer "it is" are two distinct tells.
+    assert ss.count_not_but("This is not the plan, it is not about speed; it is about trust.") == 2
     assert (
         ss.count_not_but(
             "It is not about speed; it is about trust. It's not the code, but the culture."

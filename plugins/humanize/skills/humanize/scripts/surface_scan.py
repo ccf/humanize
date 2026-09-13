@@ -183,7 +183,8 @@ def count_not_but(text: str) -> int:
     about_spans = [m.span() for m in _NOT_BUT_ISNT_ABOUT_RE.finditer(text)]
     count = len(about_spans)
     for m in _NOT_BUT_RE.finditer(text):
-        if any(m.start() < end and m.end() > start for start, end in about_spans):
+        # Same "not" already counted by the isn't-about pattern; adjacent spans may touch.
+        if any(start <= m.start() < end for start, end in about_spans):
             continue
         prefix = text[: m.start()]
         aux_m = _AUX_BEFORE_NOT_RE.search(prefix)

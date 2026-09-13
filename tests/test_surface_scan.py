@@ -235,3 +235,63 @@ def test_analyze_wordlist_hedges_intensifiers_rates():
     assert {h["term"] for h in r["wordlist"]["hits"]} == {"leverage", "robust", "seamless"}
     assert r["hedges"]["rate"] == ss.per_1k(1, r["words"])
     assert r["intensifiers"]["rate"] == ss.per_1k(2, r["words"])
+
+
+def test_summary_closer_true_when_a_closing_paragraph_restates_the_body():
+    paras = [
+        "The migration plan covers database replication and the auth service rewrite.",
+        "Details follow.",
+        "More details.",
+        "Ultimately, the migration plan succeeds when replication and the auth service "
+        "land together.",
+        "Best,\nJordan",
+    ]
+    assert ss.summary_closer(paras) is True
+
+
+def test_summary_closer_false_without_closer_phrase_or_overlap():
+    assert (
+        ss.summary_closer(
+            ["Plan covers replication.", "Details.", "More.", "Ultimately, cats are great."]
+        )
+        is False
+    )
+    assert (
+        ss.summary_closer(
+            ["Plan covers replication.", "Details.", "More.", "The replication plan is set."]
+        )
+        is False
+    )
+    assert ss.summary_closer(["Only.", "Two."]) is False
+
+
+def test_dialogue_ratio():
+    paras = ['"Hi," she said.', "He waved.", "“Bye.”", "Silence."]
+    assert ss.dialogue_ratio(paras) == 0.5
+    assert ss.dialogue_ratio([]) == 0.0
+
+
+def test_summarize_mentions_key_metrics():
+    r = ss.analyze("We leverage a robust, seamless, and pivotal platform—daily. Perhaps.")
+    s = ss.summarize(r)
+    for needle in (
+        "words",
+        "sentence length",
+        "cv",
+        "em-dash",
+        "tricolon",
+        "leverage",
+        "hedges",
+        "summary closer",
+        "dialogue",
+    ):
+        assert needle in s, needle
+
+
+def test_main_text_flag_prints_summary_not_json(monkeypatch, capsys):
+    import io
+
+    monkeypatch.setattr("sys.stdin", io.StringIO("Hello there. Bye now."))
+    ss.main(["--text"])
+    out = capsys.readouterr().out
+    assert out.startswith("words") and "{" not in out

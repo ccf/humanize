@@ -285,12 +285,83 @@ def _rate_of(hits: list[dict], n_words: int) -> float:
     return per_1k(sum(h["count"] for h in hits), n_words)
 
 
+CLOSERS = (
+    "all in all",
+    "in closing",
+    "in conclusion",
+    "in short",
+    "in summary",
+    "in the end",
+    "overall",
+    "to conclude",
+    "to sum up",
+    "ultimately",
+)
+_STOPWORDS = set(
+    "about above after again also among because before being between could every first found "
+    "great however little might never other should since still their there these thing think "
+    "those three through under until where which while would".split()
+)
+_DIALOGUE_RE = re.compile(r"[\"“][^\"”]{2,}[\"”]")
+
+
+def _content_words(text: str) -> set[str]:
+    return {w.lower() for w in words(text) if len(w) > 4 and w.lower() not in _STOPWORDS}
+
+
+def summary_closer(paragraphs: list[str]) -> bool:
+    """A paragraph among the last three opens with a closer phrase and restates the body
+    before it."""
+    if len(paragraphs) < 3:
+        return False
+    for idx in range(max(1, len(paragraphs) - 3), len(paragraphs)):
+        head = paragraphs[idx].lower().lstrip("*_#> ")
+        if not any(head.startswith(c) for c in CLOSERS):
+            continue
+        body: set[str] = set()
+        for earlier in paragraphs[:idx]:
+            body |= _content_words(earlier)
+        if len(body & _content_words(paragraphs[idx])) >= 2:
+            return True
+    return False
+
+
+def dialogue_ratio(paragraphs: list[str]) -> float:
+    if not paragraphs:
+        return 0.0
+    return round(sum(bool(_DIALOGUE_RE.search(p)) for p in paragraphs) / len(paragraphs), 3)
+
+
+def summarize(r: dict) -> str:
+    sl, pl, pu, st = r["sentence_len"], r["paragraph_len"], r["punct"], r["structures"]
+    top = ", ".join(f"{h['term']}×{h['count']}" for h in r["wordlist"]["hits"][:8]) or "none"
+    return "\n".join(
+        [
+            f"words {r['words']} · sentences {r['sentences']} · paragraphs {r['paragraphs']}",
+            f"sentence length: mean {sl['mean']}, stdev {sl['stdev']}, cv {sl['cv']} "
+            f"(min {sl['min']}, max {sl['max']})",
+            f"paragraph length: mean {pl['mean']} sentences, cv {pl['cv']}",
+            f"per 1k words: em-dash {pu['em_dash']} · semicolon {pu['semicolon']} · "
+            f"colon {pu['colon']} · ellipsis {pu['ellipsis']} · exclamation {pu['exclamation']}",
+            f"structures: tricolon {st['tricolon']} · not-but {st['not_but']} · "
+            f"rhetorical-q {st['rhetorical_q']} · parallel-opener runs {st['parallel_openers']} · "
+            f"distinct openers {r['openers']['distinct_ratio']}",
+            f"wordlist: {r['wordlist']['rate']}/1k — {top}",
+            f"hedges {r['hedges']['rate']}/1k · intensifiers {r['intensifiers']['rate']}/1k",
+            f"summary closer: {'yes' if r['discourse']['summary_closer'] else 'no'} · "
+            f"dialogue paragraphs: {round(r['dialogue']['ratio'] * 100)}%",
+        ]
+    )
+
+
 def analyze(text: str) -> dict:
     paras = split_paragraphs(text)
     sents = split_sentences(text)
     n_words = len(words(text))
     wl = phrase_hits(sents, AI_WORDLIST)
     return {
+        "discourse": {"summary_closer": summary_closer(paras)},
+        "dialogue": {"ratio": dialogue_ratio(paras)},
         "words": n_words,
         "sentences": len(sents),
         "paragraphs": len(paras),
@@ -313,13 +384,15 @@ def analyze(text: str) -> dict:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Surface-level prose metrics (stdlib only).")
     parser.add_argument("path", nargs="?", help="file to scan; reads stdin if omitted")
+    parser.add_argument("--text", action="store_true", help="print a short summary instead of JSON")
     args = parser.parse_args(argv)
     if args.path:
         with open(args.path, encoding="utf-8") as fh:
             text = fh.read()
     else:
         text = sys.stdin.read()
-    print(json.dumps(analyze(text), indent=2))
+    result = analyze(text)
+    print(summarize(result) if args.text else json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":

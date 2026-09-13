@@ -110,6 +110,9 @@ claude plugin validate .
 uv run python plugins/humanize/skills/humanize/scripts/surface_scan.py --text some.txt
 ```
 
+CI (`.github/workflows/ci.yml`) runs the same pre-commit hooks, pytest on
+Python 3.9 and 3.13, and `claude plugin validate --strict` on every pull request.
+
 `tests/fixtures/expected_tells.md` is a manual checklist: run
 `/humanize tests/fixtures/<file> --audit-only` after editing the skill and
 compare.

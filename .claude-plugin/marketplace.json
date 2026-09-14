@@ -6,18 +6,18 @@
     "url": "https://github.com/ccf/humanize"
   },
   "metadata": {
-    "description": "Remove AI tells from prose. Skill + /humanize command grounded in StoryScope (arXiv 2604.03136).",
-    "version": "0.2.0"
+    "description": "Measures prose against 13 studies of how AI and human writing differ, from word choice to sentence rhythm to story shape, then rewrites the tells out.",
+    "version": "0.3.0"
   },
   "plugins": [
     {
       "name": "humanize",
-      "description": "Audit prose for AI tells and rewrite it to read as natural human writing, grounded in StoryScope's measured human-vs-AI feature gaps",
+      "description": "Audits a draft layer by layer (vocabulary, punctuation, sentence shape, openers, closers, grammar, narrative, per-model habits) against 13 studies, then rewrites what it flags in the author's voice.",
       "source": "./",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": { "name": "ccf" },
       "license": "MIT",
-      "keywords": ["writing", "prose", "editing", "ai-detection", "storyscope", "humanize"],
+      "keywords": ["humanize", "writing", "prose", "editing", "style", "ai-writing", "rewriting", "linguistics"],
       "category": "writing",
       "strict": true
     }

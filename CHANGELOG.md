@@ -6,6 +6,34 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-14
+
+### Added
+- Agent Plugins 1.0 manifest (`plugin.json`) and Codex manifest (`.codex-plugin/plugin.json`),
+  so the plugin installs into Codex, Cursor, and Hermes with their own tooling.
+- `tests/test_portability.py`: spec-only frontmatter, no harness-specific content under
+  `skills/`, runtime references named, guard-clean scripts, manifests and CHANGELOG in
+  version lockstep, zip packager contract, study count matches `SOURCES.md`.
+- `tools/package_skill_zip.py`: builds the claude.ai skill upload from the plugin.
+- `tools/smoke_harnesses.sh`: local acceptance matrix with scanner-evidence PASS rule;
+  transcripts under `docs/acceptance/v0.3/`.
+- README install table for Claude Code, Codex CLI, Cursor, Hermes Agent, Claude Desktop.
+
+### Changed
+- Repository layout: the plugin now lives at the root (`skills/humanize/`); the marketplace
+  `source` is `./`.
+- `SKILL.md` is harness-agnostic: relative `scripts/surface_scan.py` path, plain-words options,
+  document extraction described generically; `argument-hint` removed (a hard error outside
+  Claude Code). The `/plugin` install lines moved to the README.
+- Public copy describes humanize as grounded in the thirteen studies in
+  `references/SOURCES.md` and covering every layer of a text; StoryScope is named where it is
+  the source of a number.
+- `pyproject.toml` version now tracks the plugin version.
+
+### Migration
+- Existing Claude Code installs: `claude plugin marketplace update humanize && claude plugin
+  update humanize@humanize`.
+
 ## [0.2.0] - 2026-09-14
 
 ### Added
@@ -87,7 +115,8 @@ Initial release (#1).
   CI (pre-commit, pytest on Python 3.9 and 3.13, `claude plugin validate
   --strict`), and a Bugbot review guide.
 
-[Unreleased]: https://github.com/ccf/humanize/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ccf/humanize/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ccf/humanize/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ccf/humanize/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/ccf/humanize/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ccf/humanize/compare/v0.1.0...v0.1.1

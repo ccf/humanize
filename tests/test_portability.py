@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -80,3 +81,44 @@ def test_runtime_references_and_script_are_named_in_skill():
         assert (SKILL_DIR / ref).is_file(), ref
     assert "scripts/surface_scan.py" in text
     # SOURCES.md is a maintainer registry, never loaded at runtime, so it is not named.
+
+
+AGENT_PLUGINS_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+CHANGELOG_HEADING_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\]", re.M)
+
+
+def _json(rel: str) -> dict:
+    return json.loads((ROOT / rel).read_text(encoding="utf-8"))
+
+
+def _pyproject_version() -> str:
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    return re.search(r'^version = "([^"]+)"', text, re.M).group(1)
+
+
+def test_manifests_agree():
+    root = _json("plugin.json")
+    claude = _json(".claude-plugin/plugin.json")
+    codex = _json(".codex-plugin/plugin.json")
+    market = _json(".claude-plugin/marketplace.json")
+    entry = market["plugins"][0]
+    for m in (root, claude, codex, entry):
+        assert m["name"] == "humanize"
+    versions = {
+        "plugin.json": root["version"],
+        ".claude-plugin/plugin.json": claude["version"],
+        ".codex-plugin/plugin.json": codex["version"],
+        "marketplace.metadata": market["metadata"]["version"],
+        "marketplace.plugins[0]": entry["version"],
+        "pyproject.toml": _pyproject_version(),
+    }
+    assert len(set(versions.values())) == 1, versions
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    newest = CHANGELOG_HEADING_RE.search(changelog).group(1)  # [Unreleased] has no digits
+    assert newest == root["version"], (newest, root["version"])
+    assert root["$schema"] == AGENT_PLUGINS_SCHEMA
+    assert (ROOT / codex["skills"] / "humanize/SKILL.md").is_file()
+    assert (ROOT / entry["source"] / ".claude-plugin/plugin.json").is_file()
+    assert entry["strict"] is True
+    for m in (root, claude, codex, entry):
+        assert "storyscope" not in json.dumps(m).lower()

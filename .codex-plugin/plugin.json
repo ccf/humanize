@@ -1,0 +1,21 @@
+{
+  "name": "humanize",
+  "version": "0.3.0",
+  "description": "Audits a draft layer by layer (vocabulary, punctuation, sentence shape, openers, closers, grammar, narrative, per-model habits) against 13 studies, then rewrites what it flags in the author's voice.",
+  "author": { "name": "ccf" },
+  "homepage": "https://github.com/ccf/humanize",
+  "repository": "https://github.com/ccf/humanize",
+  "license": "MIT",
+  "keywords": ["humanize", "writing", "prose", "editing", "style", "ai-writing", "rewriting", "linguistics"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "humanize",
+    "shortDescription": "Audit prose for AI tells at every layer, then rewrite it in the author's voice.",
+    "longDescription": "Reads a draft against what 13 studies measured about AI writing: word choice, punctuation, sentence shape, openers, closers, grammar, register, fiction habits, per-model quirks. A dependency-free scanner supplies the counts a model cannot eyeball, and each flag cites the sentence that triggered it.",
+    "developerName": "ccf",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": ["Humanize this draft.", "Audit this text for AI tells, don't rewrite it."],
+    "websiteURL": "https://github.com/ccf/humanize"
+  }
+}

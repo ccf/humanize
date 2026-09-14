@@ -7,9 +7,9 @@ in `references/SOURCES.md`. Spec and plan: `docs/design/`. Changelog: `CHANGELOG
 
 ```
 uv sync                                   # first time
-uv run pytest -q                          # 100 tests, must be warning-free
+uv run pytest -q                          # must be warning-free
 uv run ruff format <files> && uv run ruff check --fix <files>
-claude plugin validate --strict .
+claude plugin validate --strict .       # marketplace JSON only; does not inspect plugin or skill contents
 uv run python skills/humanize/scripts/surface_scan.py --text <file>
 python3 tools/gen_tell_scaffold.py style|narrative   # regenerate reference scaffolds
 ```
@@ -47,8 +47,16 @@ Never run bare `ruff format .` — ruff 0.16 formats Python fences inside
 - `SKILL.md` stays under ~150 lines. `/humanize` is the skill itself — do not add
   a `commands/` directory (it registers a duplicate skill named `humanize`).
 - Marketplace entry stays `strict: true` with no component arrays; `plugin.json`
-  is authoritative. Bump `version` in both when shipping.
-- Nothing under `tests/` or `plugins/**/scripts/` touches the network.
+  is authoritative. Version lives in `plugin.json`, `.claude-plugin/plugin.json`,
+  `.codex-plugin/plugin.json`, both `marketplace.json` fields, `pyproject.toml`,
+  and the newest CHANGELOG heading — `tests/test_portability.py` fails on drift.
+- Nothing under `tests/`, `skills/**/scripts/`, or `tools/package_skill_zip.py` touches the network.
+- `skills/` is harness-agnostic: no harness variables (`${CLAUDE_…}`, `HERMES_SKILL_DIR`,
+  `CURSOR_…`, `CODEX_…`) and no install commands inside it; frontmatter is exactly the Agent
+  Skills fields (`argument-hint` is a hard error outside Claude Code). `tests/test_portability.py`
+  enforces both.
+- Public copy names StoryScope only where it is the specific source of a number or a file; the
+  tool is described as grounded in the `SOURCES.md` registry (the study count is tested).
 
 ## Workflow
 
@@ -57,7 +65,13 @@ linear history required, the four CI jobs must pass on an up-to-date branch, and
 every review thread must be resolved — so after fixing a Bugbot finding, resolve
 its thread (GraphQL `resolveReviewThread`) before merging. Merge with
 `gh pr merge --rebase` (rebase is the only enabled method; merged branches are
-deleted automatically). Tag releases on `main` after the merge (`vX.Y.Z`). CI runs pre-commit, pytest (3.9 and
+deleted automatically). Release: `tools/smoke_harnesses.sh` must PASS on every harness installed
+here (transcripts under `docs/acceptance/`), then merge, then post-merge acceptance from `main`
+(Codex `plugin marketplace add ccf/humanize` without a ref, Hermes `skills install`, Claude plugin
+upgrade, Cowork marketplace add), then tag and `gh release create vX.Y.Z
+dist/humanize-skill-X.Y.Z.zip` (built by `python3 tools/package_skill_zip.py`), then verify the zip
+uploads and triggers in claude.ai chat. Anything found after the merge is fixed forward as a patch
+release. Tag releases on `main` after the merge (`vX.Y.Z`). CI runs pre-commit, pytest (3.9 and
 3.13), and plugin validation; Cursor Bugbot reviews every PR and re-reviews on
 push. Pre-commit hooks run on every commit; never `--no-verify`. After merging a plugin change:
 `claude plugin marketplace update humanize && claude plugin update humanize@humanize`.

@@ -22,16 +22,23 @@ the text. No audit table, no commentary about tells.
 **Audit mode** — the user asks you to humanize existing text, or `/humanize`
 was invoked. Follow all six steps below.
 
-## Invocation (`/humanize`)
+## Invocation (`/humanize` only)
+
+This section applies only when the user typed `/humanize …`. When the skill
+activates on its own — drafting mode, or a natural-language request like
+"humanize this" — there are no arguments: skip this section and work on the
+text the conversation is about.
 
 Arguments: $ARGUMENTS
 
-Resolve the target:
+If that line is empty or still reads literally as `$ARGUMENTS`, nothing was
+passed. Otherwise resolve the target:
 - Strip any flags (`--audit-only`, `--fiction`, `--prose`) from the arguments.
 - If what remains is a path to an existing file, read that file.
 - Otherwise treat what remains as the text itself.
 - If nothing remains, use the most recent prose you produced in this
-  conversation. If there is none, say so and stop.
+  conversation, or the text the user most recently shared. If there is none,
+  ask what to humanize.
 
 Flags:
 - `--audit-only` — stop after step 3 (the audit table). Do not rewrite.

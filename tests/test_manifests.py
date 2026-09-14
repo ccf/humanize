@@ -40,6 +40,16 @@ def test_plugin_manifest_matches_marketplace_entry():
     assert p["version"] == m["version"]
 
 
+SKILL_MD = ROOT / "plugins/humanize/skills/humanize/SKILL.md"
+
+
+def test_skill_line_budget():
+    # The budget is an invariant (CLAUDE.md, .cursor/BUGBOT.md) with no automated
+    # guard, and the file sits exactly at it (review issue 10 / recommendation 2).
+    lines = SKILL_MD.read_text().splitlines()
+    assert len(lines) <= 150, len(lines)
+
+
 REFS = ROOT / "plugins/humanize/skills/humanize/references"
 KEY_RE = re.compile(r"\[([a-z-]+-\d{4})\]")
 EXPECTED_KEYS = {
@@ -68,8 +78,13 @@ def test_sources_registry_exists_with_expected_keys():
     text = (REFS / "SOURCES.md").read_text()
     keys = _source_keys()
     assert EXPECTED_KEYS <= keys
+    # Split on lines that start with "## " rather than searching for the next
+    # occurrence of that literal, so an H2-shaped line inside an entry's body
+    # text can't truncate the block early.
+    blocks = re.split(r"(?m)^## ", text)[1:]
+    by_key = {block.split("`", 2)[1]: block for block in blocks}
     for key in keys:
-        block = text.split(f"## `{key}`", 1)[1].split("\n## ", 1)[0]
+        block = by_key[key]
         assert "May support:" in block and "Verified:" in block, key
 
 

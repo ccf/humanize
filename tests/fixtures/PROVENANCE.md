@@ -31,18 +31,23 @@ Result: 19 paragraphs / 606 words, taken verbatim with no sentence-level
 exclusions. `grammar.participial_tail.count == 1` (one hit: "...more than any
 other single technique, using 'you' pulls users into the information and makes
 it relevant to them."), at the `<= 1` specificity cap; `container_of.count == 0`;
-`discourse.disclaimer_opener.fired == False`; `repetition.phrases == []`.
+`discourse.disclaimer_opener.fired == False`; `repetition.phrases == []`. The
+one participial-tail hit is a known metric false positive — a gerund subject
+after a fronted adverbial that rule (b) does not yet cover — kept because
+fixture content never depends on the metric under test.
 
 ## Pinned values (from `surface_scan.py` at creation)
 
-Bands: floats × 0.8–1.2 (1 dp); ints ± 1; a float measuring 0.0 gets (0.0, 2.0) so the pin stays a band.
+Bands: floats × 0.8–1.2, rounded outward to 2 dp; ints ± 1; a float measuring
+0.0 gets (0.0, 2.0) so the pin stays a band; the formal nominalization gate is
+a floor (≥ 5), not a band.
 
 | fixture | key | measured | band |
 |---|---|---|---|
 | human_plain.txt | sentence_len.pct_over_30 | 0.0 | (0.0, 2.0) |
-| human_plain.txt | sentence_len.cv | 0.349 | (0.3, 0.4) |
+| human_plain.txt | sentence_len.cv | 0.349 | (0.28, 0.42) |
 | human_plain.txt | sentence_len.longest_flat_run | 9 | (8, 10) |
-| human_formal.txt | nominalization.count | 11 | (10, 12) |
+| human_formal.txt | nominalization.count | 11 | floor (≥ 5) |
 | human_fiction_excerpt.txt / human_formal.txt | max repetition.phrases[].count | 2 each | ≤ 3 each |
 | human_plain.txt | max repetition.phrases[].count | 0 (no repeated phrases) | ≤ 1 |
 

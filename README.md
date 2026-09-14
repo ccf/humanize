@@ -18,8 +18,10 @@ resolves in `references/SOURCES.md`.
 
 ## Install
 
-Requires Python 3.9+ on `PATH` for the scanner. No other dependencies. Every
-command below was checked against its CLI's `--help` for this release.
+Requires Python 3.9+ on `PATH` for the scanner. No other dependencies.
+Commands were checked against each CLI's `--help` for this release; installs
+that fetch from GitHub (Codex, Hermes) are exercised at the acceptance steps
+recorded in `docs/acceptance/`.
 
 | Harness | Install | Verify | Invoke |
 |---|---|---|---|
@@ -137,7 +139,7 @@ tests/                         pytest; no network, no LLM calls
 ```
 uv sync
 uv run pytest -q
-claude plugin validate .
+claude plugin validate --strict .
 uv run python skills/humanize/scripts/surface_scan.py --text some.txt
 ```
 

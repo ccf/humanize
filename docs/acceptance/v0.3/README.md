@@ -105,7 +105,87 @@ config.
   `skills/humanize` into `~/.hermes/skills/writing/humanize` for the run and removes
   only that directory afterward. If that path already exists, the run is SKIPped and
   nothing is touched.
-- Acceptance step 4 (`codex plugin marketplace add ccf/humanize@feat/v0.3`) adds a
-  marketplace to the user's Codex config; the same run removes the plugin and the
-  marketplace afterward and verifies with `codex plugin marketplace list`.
+- Acceptance 3 (spec §8; `codex plugin marketplace add ccf/humanize@feat/v0.3`, see
+  below) adds a marketplace to the user's Codex config; the same run removes the
+  plugin and the marketplace afterward and verifies with `codex plugin marketplace
+  list`.
 - The script never updates or reconfigures any harness CLI.
+
+## Acceptance 3 (spec §8)
+
+Spec §8.3: `codex plugin marketplace add ccf/humanize@feat/v0.3 && codex plugin add
+humanize@humanize` installs and the skill surfaces in `codex debug prompt-input "hi"`
+(pre-merge); the same without `@ref` after the merge. Run 2026-09-14, verbatim:
+
+```
+$ git push origin feat/v0.3
+Everything up-to-date
+
+$ codex plugin marketplace add ccf/humanize@feat/v0.3
+Added marketplace `humanize` from https://github.com/ccf/humanize.git#feat/v0.3.
+Installed marketplace root: /Users/ccf/.codex/.tmp/marketplaces/humanize
+
+$ codex plugin add humanize@humanize
+Added plugin `humanize` from marketplace `humanize`.
+Installed plugin root: /Users/ccf/.codex/plugins/cache/humanize/humanize/0.3.0
+
+$ codex debug prompt-input "hi" | grep -i humanize
+- humanize:humanize: Use when drafting or editing any prose — email, essay,
+  documentation, blog post, story, chat reply — or when asked to "humanize" text,
+  make it "sound less like AI", "more natural", "less robotic", or remove AI tells.
+  Also use when reviewing prose someone else wrote. Not for code, config, or commit
+  messages. (file: r5/humanize/0.3.0/skills/humanize/SKILL.md)
+
+$ codex plugin remove humanize@humanize
+Removed plugin `humanize` from marketplace `humanize`.
+
+$ codex plugin marketplace remove humanize
+Removed marketplace `humanize`.
+Removed installed marketplace root: /Users/ccf/.codex/.tmp/marketplaces/humanize
+
+$ codex plugin marketplace list
+MARKETPLACE             ROOT
+openai-primary-runtime  /Users/ccf/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime
+openai-bundled          /Users/ccf/.codex/.tmp/bundled-marketplaces/openai-bundled
+openai-curated          /Users/ccf/.codex/.tmp/plugins
+agentcairn              /Users/ccf/git/agentcairn
+```
+
+Outcome: install resolved cleanly to `0.3.0`, matching the version pinned across the
+repo's manifests; the skill was listed by `codex debug prompt-input`; the plugin and
+marketplace were both removed afterward, and the final `codex plugin marketplace
+list` matches the pre-run baseline exactly (no `humanize` row). PASS.
+
+## Acceptance 7 (spec §8)
+
+Spec §8.7 (amended — see the design doc's Post-review amendments): `grep -ri
+storyscope` over the manifests, `pyproject.toml`, and SKILL.md returns nothing; the
+README's StoryScope mentions occur only at sourced positions; every README command
+was checked against its CLI's `--help`; the README grounding paragraph scans clean
+of wordlist hits. Run 2026-09-14:
+
+- `grep -ri storyscope plugin.json .codex-plugin/plugin.json .claude-plugin/*.json
+  pyproject.toml skills/humanize/SKILL.md` — no output (empty).
+- README StoryScope positions (`grep -n -i storyscope README.md`): lines 7 (the
+  grounding paragraph, sourced explicitly), 124–125 (`style-tells.md` /
+  `narrative-tells.md` file descriptions — source of the base rates), 132 (`data/`
+  tree line — the directory holds StoryScope's taxonomy), 155–156 (the license/credit
+  paragraph — attribution is required there), 160 (the AI fiction fixture's
+  provenance). All seven are sourced positions per spec §9; none are general
+  positioning copy.
+- Every README command checked against its CLI's `--help`: Claude Code, Codex, and
+  Cursor rows verified directly; `hermes skills install --help` confirms the Hermes
+  row's `identifier` (`owner/repo/path`) and `--category`; `npx skills --help` /
+  `npx skills add --help` (skills.sh CLI 1.5.26) confirm `add <package>` accepts the
+  `owner/repo` shorthand the skills.sh row uses.
+- `python3 skills/humanize/scripts/surface_scan.py --text` on the README grounding
+  paragraph (`README.md:7-17`): `wordlist: 0.0/1k — none`. No wordlist hits.
+
+PASS.
+
+## Pre-merge status
+
+Claude Code: PASS. Codex: PASS. Cursor: SKIP (not authenticated on this machine).
+Hermes: SKIP (not authenticated on this machine). Both SKIPs move to phase 2
+(post-merge, pre-tag) per the design doc's Post-review amendments, and are re-run
+after login, with transcripts committed to this directory.

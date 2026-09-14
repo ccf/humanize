@@ -71,7 +71,7 @@ here (transcripts under `docs/acceptance/`), then merge, then post-merge accepta
 upgrade, Cowork marketplace add), then tag and `gh release create vX.Y.Z
 dist/humanize-skill-X.Y.Z.zip` (built by `python3 tools/package_skill_zip.py`), then verify the zip
 uploads and triggers in claude.ai chat. Anything found after the merge is fixed forward as a patch
-release. Tag releases on `main` after the merge (`vX.Y.Z`). CI runs pre-commit, pytest (3.9 and
+release. CI runs pre-commit, pytest (3.9 and
 3.13), and plugin validation; Cursor Bugbot reviews every PR and re-reviews on
 push. Pre-commit hooks run on every commit; never `--no-verify`. After merging a plugin change:
 `claude plugin marketplace update humanize && claude plugin update humanize@humanize`.

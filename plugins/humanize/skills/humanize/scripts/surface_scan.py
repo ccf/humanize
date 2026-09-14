@@ -44,6 +44,7 @@ _ATX_HEADING_RE = re.compile(r"^#{1,6}\s+", re.M)
 _MD_LINK_RE = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
 _BARE_URL_RE = re.compile(r"https?://\S+")
 _HTML_TAG_RE = re.compile(r"</?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*?)?/?>")
+_APOSTROPHE_GLYPH_RE = re.compile(r"(?<=\w)[ʼʹ´‘’′](?=\w)")
 
 
 def strip_markdown(text: str) -> str:
@@ -57,6 +58,11 @@ def strip_markdown(text: str) -> str:
     text = _BARE_URL_RE.sub("", text)
     text = _HTML_TAG_RE.sub("", text)
     return text
+
+
+def normalize_apostrophes(text: str) -> str:
+    """Map apostrophe look-alikes between letters to ASCII; leaves quotation marks alone."""
+    return _APOSTROPHE_GLYPH_RE.sub("'", text)
 
 
 def words(text: str) -> list[str]:
@@ -454,7 +460,7 @@ def summarize(r: dict) -> str:
 
 
 def analyze(text: str) -> dict:
-    text = strip_markdown(text)
+    text = normalize_apostrophes(strip_markdown(text))
     paras = split_paragraphs(text)
     sents = split_sentences(text)
     n_words = len(words(text))

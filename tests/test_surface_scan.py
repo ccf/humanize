@@ -449,3 +449,21 @@ def test_double_dash_em_dash_excludes_cli_flags():
 def test_double_dash_em_dash_counts_word_and_spaced_forms():
     r = ss.punctuation("A -- b and c--d.", 100)
     assert r["counts"]["em_dash"] == 2
+
+
+def test_normalize_apostrophes_only_between_word_characters():
+    src = "don´t Itʼs we’re O′Brien"
+    assert ss.normalize_apostrophes(src) == "don't It's we're O'Brien"
+    unchanged = "‘quoted’ rock ’n’ roll 'go now'"
+    assert ss.normalize_apostrophes(unchanged) == unchanged
+
+
+def test_analyze_treats_acute_accent_and_modifier_apostrophes_as_apostrophes():
+    r = ss.analyze("We don´t know. Itʼs worth noting the plan.")
+    assert r["words"] == 8
+    assert "it's worth noting" in {h["term"] for h in r["wordlist"]["hits"]}
+
+
+def test_normalize_runs_after_markdown_strip_so_backticks_are_untouched():
+    text = "Use the `dict`s API. Everything between here must survive. Now `list` ends."
+    assert ss.analyze(text)["words"] == 11

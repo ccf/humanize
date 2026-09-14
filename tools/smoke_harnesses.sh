@@ -120,13 +120,15 @@ for line in open(src, encoding="utf-8"):
                 continue
             btype = blk.get("type")
             if btype == "tool_use":
-                # Only the scanner invocation itself becomes tool-call/scanner-output
-                # evidence. A tool call that merely names surface_scan.py in a read
-                # (cat/grep) must not satisfy the tool-evidence rule; only genuine
-                # scanner invocations do, mirroring the Codex parser's filter.
-                serialized = json.dumps(blk.get("input"))
-                if "surface_scan.py" in serialized:
-                    calls.append(json.dumps(blk.get("input"), indent=2))
+                # Only a genuine scanner invocation becomes tool-call/scanner-output
+                # evidence: a Bash call whose command names both python and
+                # surface_scan.py, mirroring the Codex parser's rule. A Read/Glob/Grep
+                # search that merely names surface_scan.py — invited by SKILL.md's
+                # scan-path fallback — must not satisfy the tool-evidence rule.
+                inp = blk.get("input")
+                cmd = inp.get("command", "") if isinstance(inp, dict) else ""
+                if blk.get("name") == "Bash" and "python" in cmd and "surface_scan.py" in cmd:
+                    calls.append(json.dumps(inp, indent=2))
                     tool_id = blk.get("id")
                     if tool_id:
                         scan_ids.add(tool_id)
@@ -270,11 +272,13 @@ run_hermes() {
   command -v hermes >/dev/null || { echo "SKIP hermes (not installed)"; return; }
   local dest="$HOME/.hermes/skills/writing/humanize" f="$OUT/hermes.md" raw
   [ -e "$dest" ] && { echo "SKIP hermes ($dest already exists; not touching it)"; return; }
-  mkdir -p "$(dirname "$dest")" && cp -R "$ROOT/skills/humanize" "$dest"
-  # A ^C or kill mid-run must not leave this copy installed in the user's home
+  # A ^C or kill mid-run must not leave a copy installed in the user's home
   # directory — a leftover copy makes every later run print SKIP hermes forever.
+  # Armed before the copy starts: rm -rf on a $dest that doesn't exist yet, or
+  # exists only partially, is safe.
   trap 'rm -rf "$dest"' EXIT
   trap 'rm -rf "$dest"; trap - EXIT INT TERM; exit 130' INT TERM
+  mkdir -p "$(dirname "$dest")" && cp -R "$ROOT/skills/humanize" "$dest"
   find "$dest" -name __pycache__ -type d -exec rm -rf {} +
   # $REQUEST names the fixture by a project-relative path; run from $ROOT so it resolves
   # no matter which directory this script itself is invoked from.

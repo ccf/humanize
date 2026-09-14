@@ -1,8 +1,8 @@
 # Bugbot review guide — humanize
 
-This repo is a Claude Code plugin that audits prose for AI tells and rewrites
-it. Design spec: `docs/design/2026-09-13-humanize-plugin-design.md` and
-`docs/design/2026-09-14-humanize-v0.2-design.md`.
+This repo is an agent skill that audits prose for AI tells and rewrites it, on
+evidence from the studies in `skills/humanize/references/SOURCES.md`. Design specs:
+`docs/design/2026-09-1{3,4}-humanize-*-design.md`.
 
 ## Invariants to enforce
 

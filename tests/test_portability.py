@@ -178,7 +178,9 @@ def test_zip_packager_contract(tmp_path):
     with zipfile.ZipFile(out) as zf:
         members = set(zf.namelist())
     expected = {"humanize/SKILL.md", "humanize/scripts/surface_scan.py"}
-    expected |= {f"humanize/references/{p.name}" for p in (SKILL_DIR / "references").iterdir()}
+    expected |= {
+        f"humanize/references/{p.name}" for p in (SKILL_DIR / "references").iterdir() if p.is_file()
+    }
     assert members == expected, members ^ expected
 
 
@@ -198,3 +200,40 @@ def test_zip_packager_rejects_non_spec_frontmatter(tmp_path):
         assert "argument-hint" in str(e)
     else:
         raise AssertionError("expected PackagingError")
+
+
+NUMBER_WORDS = {
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19,
+    "twenty": 20,
+}
+STUDY_COUNT_SURFACES = {
+    "plugin.json": r"against (\d+) studies",
+    ".claude-plugin/plugin.json": r"against (\d+) studies",
+    ".codex-plugin/plugin.json": r"(\d+) studies",
+    ".claude-plugin/marketplace.json": r"(\d+) studies",
+    "pyproject.toml": r"from (\d+) studies",
+    "CLAUDE.md": r"Evidence base: (\d+) studies",
+    "README.md": r"rest on (\w+) studies",
+    "skills/humanize/SKILL.md": r"Grounded in (\w+) studies",
+}
+
+
+def test_study_count_matches_sources():
+    sources = (SKILL_DIR / "references/SOURCES.md").read_text(encoding="utf-8")
+    n = len(re.findall(r"^## `[a-z0-9-]+`", sources, re.M))
+    assert n >= 10
+    for rel, pattern in STUDY_COUNT_SURFACES.items():
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        found = re.findall(pattern, text)
+        assert found, f"{rel}: no study count matching {pattern!r}"
+        for token in found:
+            value = int(token) if token.isdigit() else NUMBER_WORDS[token.lower()]
+            assert value == n, f"{rel} says {token}, SOURCES.md has {n}"

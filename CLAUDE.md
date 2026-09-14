@@ -1,7 +1,7 @@
 # humanize — working notes for Claude
 
-Claude Code plugin that audits prose for AI tells and rewrites it. Evidence base:
-StoryScope (arXiv 2604.03136). Spec and plan: `docs/design/`. Changelog: `CHANGELOG.md`.
+Agent skill that audits prose for AI tells and rewrites it. Evidence base: 13 studies
+in `references/SOURCES.md`. Spec and plan: `docs/design/`. Changelog: `CHANGELOG.md`.
 
 ## Commands
 

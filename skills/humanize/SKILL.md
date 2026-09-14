@@ -1,14 +1,13 @@
 ---
 name: humanize
 description: Use when drafting or editing any prose — email, essay, documentation, blog post, story, chat reply — or when asked to "humanize" text, make it "sound less like AI", "more natural", "less robotic", or remove AI tells. Also use when reviewing prose someone else wrote. Not for code, config, or commit messages.
-argument-hint: "[path | text] [--audit-only] [--fiction | --prose]"
 ---
 
 # Humanize
 
 Make prose read as natural human writing by finding and removing the tells that
-mark it as AI-generated. Grounded in StoryScope (Russell et al., 2026) and
-register studies: AI converges on shared defaults; human writing disperses.
+mark it as AI-generated. Grounded in thirteen studies of measured style
+differences: AI converges on shared defaults; human writing disperses.
 
 Read `references/principles.md` first, every time.
 
@@ -24,8 +23,9 @@ was invoked. Follow all six steps below.
 
 ## Invocation (`/humanize` only)
 
-Applies only when the user typed `/humanize …`. On auto-invoke (drafting
-mode or a natural-language request) there are no arguments: skip this section.
+Applies only when the user typed `/humanize …` (Codex: `$humanize …`). On
+auto-invoke there are no arguments: skip this section. Options below also
+work as plain words in a request ("audit only", "this is fiction").
 
 Arguments: $ARGUMENTS
 
@@ -67,21 +67,21 @@ the length.
 If the text is 80 words or longer, run the scanner and keep the output:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/humanize/scripts/surface_scan.py" --text <path>
+python3 scripts/surface_scan.py --text <path>
 ```
 
-Write pasted text to a temp file first. For the full JSON, drop `--text`. Under
-80 words, skip this step; the statistics are noise. The scanner strips code,
-links, URLs, and heading markers from Markdown before measuring.
+Run it from this skill's folder (the directory holding this SKILL.md). Write
+pasted text to a temp file first. For the full JSON, drop `--text`. Under 80
+words, skip this step; the statistics are noise. The scanner strips code, links,
+URLs, and heading markers from Markdown before measuring.
 
 **Non-text sources** (`.docx`, `.pdf`, `.pptx`, `.odt`, `.rtf`): the scanner reads
-plain text only. Extract first — use the `docx` or `pdf` skill if installed
-(Anthropic's `document-skills` plugin) to write a temp `.md`, then scan and
-audit that. If the skill is not installed, say so and give the two commands:
-`/plugin marketplace add anthropics/skills` and
-`/plugin install document-skills@anthropic-agent-skills`; for a PDF you can
-still Read it yourself and write the text to a temp file. Deliver the rewrite
-as Markdown; if the user wants a Word file back, hand off to the `docx` skill.
+plain text only. Extract first with the harness's document skills (Anthropic's
+`docx`/`pdf` skills ship with Claude Code's `document-skills` plugin and with
+Claude Desktop) to write a temp `.md`, then scan and audit that. In claude.ai the
+file is an attachment: convert it in the sandbox (pandoc, pdfplumber). Without
+document skills, read the file yourself if you can and write the text to a temp
+file; otherwise ask for a text export. Deliver Markdown; a Word file via `docx`.
 
 ### 3. Audit
 

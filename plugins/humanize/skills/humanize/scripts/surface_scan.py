@@ -373,6 +373,77 @@ def container_phrases(sentences: list[str]) -> list[dict]:
     ]
 
 
+_NOMINAL_SUFFIX_RE = re.compile(r"(?:tion|sion|ment|ance|ence)$")
+NOMINAL_STOPLIST = frozenset(
+    """station question condition position mention portion fraction function attention tradition
+    edition mission session version occasion passion tension pension mansion section fiction
+    population information education situation relation location generation organization
+    operation direction collection connection election exception reaction selection solution
+    revolution institution constitution faction auction caution vacation vocation corporation
+    proportion caption junction sanction ambition addition tuition nutrition petition
+    ammunition emotion devotion convention invention intention infection affection perfection
+    dimension television collision illusion compassion commission obsession possession
+    profession procession recession depression percussion concussion precision
+    comment document government department environment equipment apartment element
+    instrument segment monument ornament parliament sentiment testament argument treatment
+    movement basement pavement garment torment ferment pigment fragment filament ligament
+    regiment sediment condiment compliment complement implement supplement temperament
+    tournament sacrament firmament parchment management agreement statement settlement
+    judgment employment investment requirement entertainment experiment excitement
+    achievement commitment
+    science audience absence presence silence sentence evidence experience conference
+    difference distance balance finance insurance instance essence sequence consequence
+    reference preference influence confidence violence patience residence substance romance
+    alliance appliance entrance fragrance guidance allowance performance importance
+    resistance existence intelligence independence correspondence circumstance maintenance
+    acceptance assistance ambulance nuisance vengeance innocence competence excellence
+    providence prudence diligence negligence coincidence incidence conscience defence offence
+    licence obedience convenience adolescence magnificence eloquence affluence advance
+    elegance arrogance ignorance relevance brilliance radiance variance grievance abundance
+    acquaintance inheritance ordinance dominance resonance defiance severance deliverance
+    perseverance temperance utterance sustenance countenance provenance governance""".split()
+)
+DISCLAIMER_PHRASES = [
+    "as an ai",
+    "consult a professional",
+    "i cannot provide",
+    "i'm not able to",
+    "it's important to approach",
+]
+
+
+def nominalization_block(sentences: list[str]) -> dict:
+    counts: dict = Counter()
+    frames = []
+    for si, s in enumerate(sentences):
+        ws = words(s)
+        for i, w in enumerate(ws):
+            low = w.lower()
+            stem = low[:-1] if low.endswith("s") else low
+            if len(stem) < 7 or not _NOMINAL_SUFFIX_RE.search(stem) or stem in NOMINAL_STOPLIST:
+                continue
+            counts[low] += 1
+            if 0 < i < len(ws) - 1 and ws[i - 1].lower() == "the" and ws[i + 1].lower() == "of":
+                frames.append({"text": f"the {low} of", "sentence": si})
+    return {
+        "count": sum(counts.values()),
+        "hits": [{"text": t, "count": c} for t, c in counts.most_common(15)],
+        "of_frames": frames[:10],
+    }
+
+
+def disclaimer_opener(paragraphs: list[str], sentences: list[str]) -> dict:
+    hits = [
+        {"text": h["term"], "sentence": pos}
+        for h in phrase_hits(sentences, DISCLAIMER_PHRASES)
+        for pos in h["positions"]
+    ]
+    hits.sort(key=lambda h: h["sentence"])
+    first = paragraphs[0] if paragraphs else ""
+    fired = any(_term_re(p).search(first) for p in DISCLAIMER_PHRASES)
+    return {"fired": bool(fired), "hits": hits}
+
+
 AI_WORDLIST = sorted(
     {
         "a beacon of",
@@ -607,7 +678,10 @@ def analyze(text: str) -> dict:
     tails = participial_tails(sents)
     containers = container_phrases(sents)
     return {
-        "discourse": {"summary_closer": summary_closer(paras)},
+        "discourse": {
+            "summary_closer": summary_closer(paras),
+            "disclaimer_opener": disclaimer_opener(paras, sents),
+        },
         "dialogue": {"ratio": dialogue_ratio(paras)},
         "words": n_words,
         "sentences": len(sents),
@@ -634,6 +708,7 @@ def analyze(text: str) -> dict:
             },
             "container_of": {"count": len(containers), "hits": containers[:10]},
         },
+        "nominalization": nominalization_block(sents),
     }
 
 

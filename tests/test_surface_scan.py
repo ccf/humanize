@@ -590,3 +590,48 @@ def test_analyze_grammar_block_shape():
     assert g["participial_tail"]["rate"] == ss.per_1k(1, r["words"])
     assert set(g["participial_tail"]["hits"][0]) == {"text", "sentence"}
     assert g["container_of"] == {"count": 1, "hits": [{"text": "a sense of", "sentence": 1}]}
+
+
+def test_nominal_stoplist_is_large_and_every_entry_is_reachable():
+    assert len(ss.NOMINAL_STOPLIST) >= 150
+    for w in ss.NOMINAL_STOPLIST:
+        assert len(w) >= 7 and ss._NOMINAL_SUFFIX_RE.search(w), w
+
+
+def test_nominalization_hits_and_frames():
+    s = ss.split_sentences(
+        "The implementation of the policy led to an improvement in retention. "
+        "The nation's position on the question was clear in every session. "
+        "Sentences, instances, and appliances are not nominalizations, but implementations are."
+    )
+    n = ss.nominalization_block(s)
+    assert set(n) == {"count", "hits", "of_frames"}
+    texts = {h["text"] for h in n["hits"]}
+    assert {
+        "implementation",
+        "improvement",
+        "retention",
+        "implementations",
+        "nominalizations",
+    } <= texts
+    assert not ({"sentences", "instances", "appliances", "position", "question", "session"} & texts)
+    assert n["of_frames"] == [{"text": "the implementation of", "sentence": 0}]
+    assert set(n["hits"][0]) == {"text", "count"}
+
+
+def test_disclaimer_opener_fires_only_from_first_paragraph():
+    paras = ["It's important to approach this carefully.", "As an AI I would add a caveat."]
+    d = ss.disclaimer_opener(paras, ss.split_sentences("\n\n".join(paras)))
+    assert d["fired"] is True and [h["sentence"] for h in d["hits"]] == [0, 1]
+    paras2 = ["We shipped on time.", "As an AI I would add a caveat."]
+    d2 = ss.disclaimer_opener(paras2, ss.split_sentences("\n\n".join(paras2)))
+    assert d2["fired"] is False and len(d2["hits"]) == 1
+
+
+def test_analyze_exposes_nominalization_and_disclaimer():
+    r = ss.analyze(
+        "It's important to approach the implementation of this with care.\n\nMore text here."
+    )
+    assert r["discourse"]["disclaimer_opener"]["fired"] is True
+    assert r["discourse"]["summary_closer"] is False
+    assert r["nominalization"]["of_frames"][0]["text"] == "the implementation of"

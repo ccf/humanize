@@ -326,7 +326,7 @@ ING_STOPLIST = frozenset(
 PREP_SUB = frozenset(
     """in on at by after before during since for with from under over within
     when while if although as once until despite according given unlike
-    regardless besides except beyond throughout across""".split()
+    regardless besides except beyond without throughout across""".split()
 )
 SUBORDINATORS = frozenset(
     """although because while when if once since after before until
@@ -343,7 +343,17 @@ FINITE_AUX = frozenset(
     """is are was were be been has have had do does did will would
     can could should may might must""".split()
 )
-_PARTICIPIAL_TAIL_RE = re.compile(r",\s+(?:\w+ly\s+)?(\w+ing)\b", re.I)
+IRREGULAR_PAST = frozenset(
+    """rose fell grew went took made held led came became began brought built
+    bought chose drew drove felt fought found gave got kept knew left lost met
+    paid put ran said saw sold sent set sat shook shut sang slept spoke spent
+    stood struck taught told thought threw understood woke won wrote cut hit
+    let read spread split quit hurt cost bent lent dealt meant swept wept fed
+    bled fled sped laid lay hung swung stuck dug spun shone rode rang sank
+    drank ate flew froze hid bit lit slid stole tore wore wove swore broke
+    forgot forgave arose awoke overcame undertook withdrew""".split()
+)
+_PARTICIPIAL_TAIL_RE = re.compile(r",\s+(?:\w+ly\s+)?(\w+ing)\b(?!-)", re.I)
 _CLAUSE_END_RE = re.compile(r"[,;:—–.!?]")
 _LIST_CONTINUATION_RE = re.compile(r"^(?:,|and\b|or\b)", re.I)
 _LIST_ITEM_TAIL_RE = re.compile(r"^\s+\w+,\s*(?:and|or)\b", re.I)
@@ -376,27 +386,42 @@ def clause_text(sentence: str, start: int, head_end: int) -> str:
     return snippet.rstrip()
 
 
+def _has_finite_verb(toks: list[str]) -> bool:
+    return any(t in FINITE_AUX or t in IRREGULAR_PAST or t.endswith("ed") for t in toks)
+
+
 def _is_fronted_adverbial(prefix: str) -> bool:
-    toks = [w.lower() for w in words(prefix)]
+    # `prefix` runs from the sentence start to the participial match's comma and
+    # may itself contain earlier commas (city-state, dates, thousands separators,
+    # coordinated adjectives, or a genuine second clause). Segment on the first of
+    # those: the opener decides whether a skip is even on the table, and whatever
+    # follows it (the "remainder") decides whether that opener's clause is all
+    # there is, or whether a complete second clause has already started — in
+    # which case the -ing word is a real trailing participial, not the opener's.
+    comma = prefix.find(",")
+    opener, remainder = (prefix[:comma], prefix[comma + 1 :]) if comma != -1 else (prefix, "")
+    toks = [w.lower() for w in words(opener)]
     if not toks:
         return False
-    if toks[0] in SUBORDINATORS:
-        # The comma closes a subordinate clause, so the -ing word is the main
-        # clause's subject, never a tail. The -ed / FINITE_AUX veto does not apply.
-        return True
-    if len(toks) <= 2 and toks[0] in CONJ_ADVERBS:
-        return True
-    return toks[0] in PREP_SUB and not any(t in FINITE_AUX or t.endswith("ed") for t in toks)
+    is_opener = (
+        toks[0] in SUBORDINATORS  # the subordinate clause's own verb doesn't
+        # count against it — every subordinate clause has one — so no veto
+        # applies to the opener itself here.
+        or (len(toks) <= 2 and toks[0] in CONJ_ADVERBS)
+        or (toks[0] in PREP_SUB and not _has_finite_verb(toks))
+    )
+    if not is_opener:
+        return False
+    return not _has_finite_verb([w.lower() for w in words(remainder)])
 
 
 def participial_tails(sentences: list[str]) -> list[dict]:
     hits = []
     for si, s in enumerate(sentences):
-        first_comma = s.find(",")
         for m in _PARTICIPIAL_TAIL_RE.finditer(s):
             if m.group(1).lower() in ING_STOPLIST:
                 continue
-            if m.start() == first_comma and _is_fronted_adverbial(s[: m.start()]):
+            if _is_fronted_adverbial(s[: m.start()]):
                 continue
             rest = s[m.end() :]
             if _LIST_CONTINUATION_RE.match(rest.lstrip()) or _LIST_ITEM_TAIL_RE.match(rest):

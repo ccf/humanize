@@ -605,6 +605,41 @@ def test_participial_tail_still_fires_past_a_fronted_opener():
     )
 
 
+def test_participial_tail_ignores_hyphenated_ing_compounds():
+    # Bugbot PR #6 comment 4002402541: \b fires at the hyphen, so "cutting-edge"
+    # was misread as a clause head with only "-edge" left over for exclusion checks.
+    assert (
+        ss.participial_tails(
+            ["We shipped fast tools, cutting-edge dashboards, and long-standing fixes."]
+        )
+        == []
+    )
+    assert ss.participial_tails(["The team shipped, cutting the backlog in half."]) != []
+
+
+def test_participial_tail_guard_evaluates_whole_prefix_not_just_first_raw_comma():
+    # Bugbot PR #6 comment 4002402546: gating on `m.start() == first_comma` meant
+    # any earlier comma inside the opener (city-state, dates, thousands
+    # separators) disabled the adverbial check entirely. Must NOT fire — the
+    # extra commas are still part of one verbless opener.
+    for s in (
+        "In Austin, Texas, shipping continued.",
+        "In 2024, with 1,200 users, onboarding stalled.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    # Must still fire — a complete second clause (with a finite verb, including
+    # an irregular past) follows the opener before the -ing word, so it's a
+    # genuine trailing participial, not the opener's gerund subject.
+    assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
+    assert ss.participial_tails(["After the launch, the board met, approving the plan."]) != []
+    # All A3 cases still hold under the whole-prefix guard.
+    assert ss.participial_tails(["However, shipping continued."]) == []
+    assert (
+        ss.participial_tails(["After the release shipped, ensuring alignment took a week."]) == []
+    )
+    assert ss.participial_tails(["Costs rose, driving the decision."]) != []
+
+
 def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():
     s = ["We shipped, ensuring " + " ".join(["alignment"] * 12) + " more."]
     text = ss.participial_tails(s)[0]["text"]

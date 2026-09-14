@@ -449,3 +449,464 @@ def test_double_dash_em_dash_excludes_cli_flags():
 def test_double_dash_em_dash_counts_word_and_spaced_forms():
     r = ss.punctuation("A -- b and c--d.", 100)
     assert r["counts"]["em_dash"] == 2
+
+
+def test_normalize_apostrophes_only_between_word_characters():
+    src = "don´t Itʼs we’re O′Brien"
+    assert ss.normalize_apostrophes(src) == "don't It's we're O'Brien"
+    unchanged = "‘quoted’ rock ’n’ roll 'go now'"
+    assert ss.normalize_apostrophes(unchanged) == unchanged
+
+
+def test_analyze_treats_acute_accent_and_modifier_apostrophes_as_apostrophes():
+    r = ss.analyze("We don´t know. Itʼs worth noting the plan.")
+    assert r["words"] == 8
+    assert "it's worth noting" in {h["term"] for h in r["wordlist"]["hits"]}
+
+
+def test_normalize_runs_after_markdown_strip_so_backticks_are_untouched():
+    text = "Use the `dict`s API. Everything between here must survive. Now `list` ends."
+    assert ss.analyze(text)["words"] == 11
+
+
+def _unique_filler(n_sentences: int) -> str:
+    return " ".join(
+        f"Alpha{i} beta{i} gamma{i} delta{i} epsilon{i} zeta{i} eta{i} theta{i}."
+        for i in range(n_sentences)
+    )
+
+
+PLANTED = (
+    "Monday we aligned across all workstreams and teams early. "
+    "Later coordination across all workstreams and teams improved. "
+    "By Friday delivery across all workstreams and teams stayed steady."
+)
+
+
+def test_repeated_phrases_collapse_to_one_maximal_phrase():
+    phrases = ss.repeated_phrases(ss.split_sentences(PLANTED))
+    assert phrases == [
+        {"text": "across all workstreams and teams", "count": 3, "sentences": [0, 1, 2]}
+    ]
+
+
+def test_repeated_phrases_whole_repeated_sentence_counts_once():
+    s = (
+        "The project remains on track and the team continues to deliver "
+        "against the agreed plan for the quarter."
+    )
+    phrases = ss.repeated_phrases(ss.split_sentences(s + " " + s))
+    assert len(phrases) == 1 and phrases[0]["count"] == 2
+    assert len(phrases[0]["text"].split()) == 18
+
+
+def test_repeated_phrases_need_two_content_words():
+    text = (
+        "We met at the end of March. They spoke at the end of April. Costs fell at the end of May."
+    )
+    assert ss.repeated_phrases(ss.split_sentences(text)) == []
+
+
+def test_repeated_phrases_keep_a_more_frequent_short_phrase_inside_a_rarer_long_one():
+    text = (
+        "We ship the release notes weekly here. They ship the release notes weekly there. "
+        "Others ship the release notes on Fridays."
+    )
+    phrases = ss.repeated_phrases(ss.split_sentences(text))
+    assert {p["text"]: p["count"] for p in phrases} == {
+        "ship the release notes weekly": 2,
+        "ship the release notes": 3,
+    }
+
+
+def test_repetition_block_rate_and_too_short():
+    r = ss.analyze(_unique_filler(20) + " " + PLANTED)
+    rep = r["repetition"]
+    assert rep["too_short"] is False
+    assert rep["repeated_phrase_rate"] == ss.per_1k(2, r["words"])
+    assert rep["longest_repeat"] == 5
+    assert rep["phrases"][0]["text"] == "across all workstreams and teams"
+    short = ss.analyze("Short text. " * 10)["repetition"]
+    assert short == {
+        "too_short": True,
+        "repeated_phrase_rate": 0.0,
+        "longest_repeat": 0,
+        "phrases": [],
+    }
+
+
+def test_repeated_phrases_ngram_cap_bounds_a_boundary_less_run_on_sentence():
+    # A 60-item bullet list with no terminal punctuation scans as one 480-word
+    # "sentence"; without a cap this is O(L^3) and multi-second (review issue 2).
+    import time
+
+    phrase = "workstream update for the team status report today"
+    run_on_sentence = ", ".join([phrase] * 50) + "."  # one sentence, 400 words
+    start = time.perf_counter()
+    r = ss.analyze(run_on_sentence)
+    elapsed = time.perf_counter() - start
+    assert elapsed < 1.0
+    assert r["repetition"]["longest_repeat"] <= 60
+    # A10: the returned (sliced) phrase list stays small regardless of how many
+    # times the phrase repeats. (`repeated_phrase_rate` itself is not asserted
+    # here — see the final fix report for why this specific probe's rate is not
+    # under the brief's stated 50/1k target even after the A10 merge.)
+    assert len(r["repetition"]["phrases"]) <= 5
+
+
+def test_repeated_phrases_merges_overlapping_cap_length_windows_of_one_run():
+    # Review issue A10: the 60-token cap fragments a verbatim repeat longer than
+    # 60 tokens into many overlapping, same-count 60-grams that the existing
+    # maximality collapse never merges (it only drops shorter substrings),
+    # inflating repeated_phrase_rate. Two identical 100-word sentences should
+    # collapse to exactly one phrase, not the 41 overlapping 60-token windows a
+    # cap with no merge step would keep.
+    sentence = " ".join(f"alpha{i}" for i in range(100)) + "."
+    text = sentence + " " + sentence
+    phrases = ss.repeated_phrases(ss.split_sentences(text))
+    assert len(phrases) == 1
+    assert phrases[0]["count"] == 2
+    assert len(phrases[0]["text"].split()) == 60
+    r = ss.analyze(text)
+    assert r["repetition"]["longest_repeat"] == 60
+
+
+def test_participial_tail_hits_canonical_forms_and_extracts_clause():
+    s = ["We shipped the release, ensuring alignment across teams before the freeze."]
+    hits = ss.participial_tails(s)
+    assert hits == [{"text": ", ensuring alignment across teams before the freeze", "sentence": 0}]
+    assert ss.participial_tails(['"I know," she said, smiling.']) == [
+        {"text": ", smiling", "sentence": 0}
+    ]
+    assert ss.participial_tails(["Costs rose, driving the decision."]) == [
+        {"text": ", driving the decision", "sentence": 0}
+    ]
+    assert ss.participial_tails(["Revenue grew, quickly outpacing the plan."])[0]["text"] == (
+        ", quickly outpacing the plan"
+    )
+
+
+def test_participial_tail_exclusions():
+    assert ss.participial_tails(["In 2024, rising costs shaped the plan."]) == []
+    assert ss.participial_tails(["On Monday, marketing shipped the page."]) == []
+    assert ss.participial_tails(["The team focused on planning, testing, and shipping."]) == []
+    assert ss.participial_tails(["We paused, pending the audit."]) == []
+    assert (
+        ss.participial_tails(["Readers include PhD candidates, working parents, or immigrants."])
+        == []
+    )
+    # "after" is a subordinator: the comma closes its clause, so "ensuring" heads
+    # the main clause's gerund subject, not a participial tail (review issue 3).
+    assert (
+        ss.participial_tails(["After the release shipped, ensuring alignment took a week."]) == []
+    )
+
+
+def test_participial_tail_fronted_adverbial_openers_do_not_fire():
+    # Review issue 3 / T3a / T3c: subordinator-led prefixes skip unconditionally,
+    # conjunctive-adverb openers skip, and PREP_SUB gains the missing prepositions.
+    for s in (
+        "However, shipping continued.",
+        "Yesterday, shipping continued.",
+        "Instead, running the numbers again helped.",
+        "First, gathering the data matters.",
+        "Despite the delay, shipping continued.",
+        "According to the report, spending fell.",
+        "Because the vendor slipped, shipping the release took longer.",
+        "Once the audit closed, filing became routine.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+
+
+def test_participial_tail_still_fires_past_a_fronted_opener():
+    assert ss.participial_tails(["Costs rose, driving the decision."]) != []
+    assert ss.participial_tails(["The team shipped on Friday, closing the quarter strong."]) != []
+    # The subordinator only exempts the first comma; the second comma's tail still fires.
+    assert (
+        ss.participial_tails(["Although costs rose, the team shipped, closing the quarter."]) != []
+    )
+
+
+def test_participial_tail_ignores_hyphenated_ing_compounds():
+    # Bugbot PR #6 comment 4002402541: \b fires at the hyphen, so "cutting-edge"
+    # was misread as a clause head with only "-edge" left over for exclusion checks.
+    assert (
+        ss.participial_tails(
+            ["We shipped fast tools, cutting-edge dashboards, and long-standing fixes."]
+        )
+        == []
+    )
+    assert ss.participial_tails(["The team shipped, cutting the backlog in half."]) != []
+
+
+def test_participial_tail_guard_evaluates_whole_prefix_not_just_first_raw_comma():
+    # Bugbot PR #6 comment 4002402546, REVISED after the re-review: gating on
+    # `m.start() == first_comma` meant any earlier comma inside the opener
+    # (city-state, dates, thousands separators) disabled the adverbial check
+    # entirely. The whole-prefix guard is segment-based: the first comma segment
+    # must be opener-led; every later segment must be opener-internal (one word,
+    # or itself preposition-led) or the guard lifts. Must NOT fire — every
+    # non-first segment is opener-internal (a single word or a prepositional
+    # phrase), so it's all one verbless opener.
+    for s in (
+        "In Austin, Texas, shipping continued.",
+        "In 2024, with 1,200 users, onboarding stalled.",
+        "On July 4, 2024, spending spiked.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    # Must still fire — a later segment is a multi-word, non-prepositional
+    # clause of its own (even with only a present-tense verb the finite-verb
+    # veto alone can't see), so the -ing word is a genuine trailing participial.
+    for s in (
+        "In most quarters, revenue rises, lifting margins.",
+        "In practice, this approach reduces friction, enabling teams to move faster.",
+        "In March, the team grew, closing the gap.",
+        "After the launch, the board met, approving the plan.",
+    ):
+        assert ss.participial_tails([s]) != [], s
+    # All A3 cases still hold under the whole-prefix guard.
+    assert ss.participial_tails(["However, shipping continued."]) == []
+    assert (
+        ss.participial_tails(["After the release shipped, ensuring alignment took a week."]) == []
+    )
+    assert ss.participial_tails(["Costs rose, driving the decision."]) != []
+
+
+def test_irregular_past_homographs_pruned_from_the_finite_verb_veto():
+    # Bugbot PR #6 comment 4002562248: the original IRREGULAR_PAST list included
+    # present/past homographs and common nouns/adjectives (cost, left, set, rose,
+    # ...), so a preposition-led opener containing one failed the verbless test
+    # and a gerund subject was wrongly reported as a trailing participial.
+    for s in (
+        "At low cost, shipping continued.",
+        "On the left, hiring slowed.",
+        "In the rose garden, planting began.",
+        "In the first set, serving improved.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    # Unambiguous past forms still veto the opener correctly. ("fell" itself
+    # was pruned in A12 as the "one fell swoop" homograph; "grew" stands in.)
+    assert ss.participial_tails(["Under the plan costs grew, driving the decision."]) != []
+    assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
+    # Bugbot's companion finding (present-tense remainder after an opener) is
+    # already handled by the revised A7 segment rule; no new code needed here.
+    assert (
+        ss.participial_tails(
+            ["In practice, this approach reduces friction, enabling teams to move faster."]
+        )
+        != []
+    )
+
+
+def test_irregular_past_homographs_pruned_further_round_two_and_three():
+    # Re-review rounds 2-3 found four more homographs on the A11 keep-list that
+    # are ordinary nouns/adjectives in openers -- felt (wool felt), thought (on
+    # second thought), stole (fur stole), fell (one fell swoop) -- plus
+    # borderline spent (spent grain/fuel) and led (the lowercased "LED"
+    # acronym, which also needed the generic -ed-suffix heuristic narrowed to
+    # length > 3, since "led" alone still matched it after removal from
+    # IRREGULAR_PAST). Final set: 61 words.
+    for s in (
+        "In wool felt, weaving continued.",
+        "On second thought, hiring slowed.",
+        "In one fell swoop, hiring stopped.",
+        "In the LED aisle, shopping continued.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
+
+
+def test_prep_led_intermediate_segment_with_a_finite_verb_is_a_clause():
+    # Bugbot PR #6 comment 4002717678: an intermediate segment starting with a
+    # PREP_SUB word was treated as opener-internal unconditionally, so a real
+    # clause hiding behind a preposition ("with the new vendor the team shipped
+    # faster") was swallowed and a genuine trailing tail was dropped.
+    for s in (
+        "However, with the new vendor the team shipped faster, cutting the backlog.",
+        "Although costs rose, with the new vendor the team hired fast, doubling headcount.",
+    ):
+        assert ss.participial_tails([s]) != [], s
+    # A verbless preposition-led intermediate segment is still opener-internal.
+    for s in (
+        "In 2024, with 1,200 users, onboarding stalled.",
+        "In Austin, Texas, in 2024, hiring slowed.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+
+
+def test_subordinator_led_intermediate_segment_stays_opener_internal():
+    # Bugbot PR #6 comment 4002782444: A13's finite-verb check ran on every
+    # PREP_SUB-led intermediate segment, including subordinator-led ones (after,
+    # when, ...). A subordinate clause always carries a verb and its own comma
+    # closes it, so the following -ing word is still a gerund subject, not a
+    # tail -- the guard must stay regardless of that verb.
+    for s in (
+        "However, after the audit closed, filing became routine.",
+        "Although costs rose, when the audit closed, filing became routine.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    # A13's genuine-clause detection (finite verb in a non-subordinator
+    # preposition-led or plain multi-word segment) still fires correctly.
+    for s in (
+        "However, with the new vendor the team shipped faster, cutting the backlog.",
+        "Although costs rose, with the new vendor the team hired fast, doubling headcount.",
+        "After the launch, the board met, approving the plan.",
+    ):
+        assert ss.participial_tails([s]) != [], s
+
+
+def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():
+    s = ["We shipped, ensuring " + " ".join(["alignment"] * 12) + " more."]
+    text = ss.participial_tails(s)[0]["text"]
+    assert len(text) <= 60 and not text.endswith("alignmen")
+
+
+def test_participial_tail_clause_text_stops_at_en_dash_like_em_dash():
+    # Review issue 13: en dash added to _CLAUSE_END_RE alongside em dash.
+    em = ss.participial_tails(["We shipped the release, ensuring alignment — then rested."])
+    en = ss.participial_tails(["We shipped the release, ensuring alignment – then rested."])
+    assert em[0]["text"] == en[0]["text"] == ", ensuring alignment"
+
+
+def test_clause_text_en_dash_terminates_only_when_whitespace_follows():
+    # Review issue A8: A5 made en dash a clause terminator outright, so a
+    # numeric range like "2023-2024" (en dash) was truncated mid-range.
+    keeps_range = ss.participial_tails(
+        ["We shipped the release, covering 2023–2024 spending in full."]
+    )
+    assert keeps_range[0]["text"] == ", covering 2023–2024 spending in full"
+    still_terminates = ss.participial_tails(
+        ["We shipped the release, ensuring alignment – then rested."]
+    )
+    assert still_terminates[0]["text"] == ", ensuring alignment"
+
+
+def test_container_phrases():
+    s = [
+        "She felt a sense of unease and the quiet weight of the decision.",
+        "The foundation of the house held.",
+    ]
+    hits = ss.container_phrases(s)
+    assert [h["text"] for h in hits] == ["a sense of", "the quiet weight of", "The foundation of"]
+    assert [h["sentence"] for h in hits] == [0, 0, 1]
+    assert ss.container_phrases(["A sea change is coming."]) == []
+
+
+def test_analyze_grammar_block_shape():
+    r = ss.analyze(
+        "We shipped the release, ensuring alignment across teams. She felt a sense of dread."
+    )
+    g = r["grammar"]
+    assert g["participial_tail"]["count"] == 1
+    assert g["participial_tail"]["rate"] == ss.per_1k(1, r["words"])
+    assert set(g["participial_tail"]["hits"][0]) == {"text", "sentence"}
+    assert g["container_of"] == {"count": 1, "hits": [{"text": "a sense of", "sentence": 1}]}
+
+
+def test_nominal_stoplist_is_large_and_every_entry_is_reachable():
+    assert len(ss.NOMINAL_STOPLIST) >= 150
+    for w in ss.NOMINAL_STOPLIST:
+        assert len(w) >= 7 and ss._NOMINAL_SUFFIX_RE.search(w), w
+
+
+def test_nominalization_hits_and_frames():
+    s = ss.split_sentences(
+        "The implementation of the policy led to an improvement in retention. "
+        "The nation's position on the question was clear in every session. "
+        "Sentences, instances, and appliances are not nominalizations, but implementations are."
+    )
+    n = ss.nominalization_block(s)
+    assert set(n) == {"count", "hits", "of_frames"}
+    texts = {h["text"] for h in n["hits"]}
+    assert {
+        "implementation",
+        "improvement",
+        "retention",
+        "implementations",
+        "nominalizations",
+    } <= texts
+    assert not ({"sentences", "instances", "appliances", "position", "question", "session"} & texts)
+    assert n["of_frames"] == [{"text": "the implementation of", "sentence": 0}]
+    assert set(n["hits"][0]) == {"text", "count"}
+
+
+def test_of_frames_requires_literal_adjacency_in_the_raw_sentence():
+    # Review issue 4: token-level adjacency crosses punctuation and fabricates a
+    # frame that is not literally in the text ("implementation, of course,").
+    no_frame = ss.nominalization_block(ss.split_sentences("The implementation, of course, worked."))
+    assert no_frame["of_frames"] == []
+    has_frame = ss.nominalization_block(
+        ss.split_sentences("The implementation of the plan worked.")
+    )
+    assert has_frame["of_frames"] == [{"text": "the implementation of", "sentence": 0}]
+
+
+def test_disclaimer_opener_fires_only_from_first_paragraph():
+    paras = ["It's important to approach this carefully.", "As an AI I would add a caveat."]
+    d = ss.disclaimer_opener(paras, ss.split_sentences("\n\n".join(paras)))
+    assert d["fired"] is True and [h["sentence"] for h in d["hits"]] == [0, 1]
+    paras2 = ["We shipped on time.", "As an AI I would add a caveat."]
+    d2 = ss.disclaimer_opener(paras2, ss.split_sentences("\n\n".join(paras2)))
+    assert d2["fired"] is False and len(d2["hits"]) == 1
+
+
+def test_analyze_exposes_nominalization_and_disclaimer():
+    r = ss.analyze(
+        "It's important to approach the implementation of this with care.\n\nMore text here."
+    )
+    assert r["discourse"]["disclaimer_opener"]["fired"] is True
+    assert r["discourse"]["summary_closer"] is False
+    assert r["nominalization"]["of_frames"][0]["text"] == "the implementation of"
+
+
+def test_sentence_len_extras():
+    assert ss.sentence_len_extras([10, 12, 9, 30, 31, 40]) == {
+        "pct_over_30": 33.3,
+        "p90": 40,
+        "longest_flat_run": 3,
+    }
+    assert ss.sentence_len_extras([7]) == {"pct_over_30": 0.0, "p90": 7, "longest_flat_run": 1}
+    assert ss.sentence_len_extras([]) == {"pct_over_30": 0.0, "p90": 0, "longest_flat_run": 0}
+    # a monotone ramp is measured against the run's first sentence, not its neighbour
+    assert ss.sentence_len_extras([10, 13, 16, 19])["longest_flat_run"] == 2
+
+
+def test_analyze_sentence_len_keeps_stats_and_adds_extras():
+    r = ss.analyze("One two three. Four five.\n\nSix seven eight nine ten eleven.")
+    assert set(r["sentence_len"]) == {
+        "mean",
+        "stdev",
+        "cv",
+        "min",
+        "max",
+        "pct_over_30",
+        "p90",
+        "longest_flat_run",
+    }
+    assert set(r["paragraph_len"]) == {"mean", "stdev", "cv", "min", "max"}
+    assert r["sentence_len"]["p90"] == 6
+
+
+def test_summarize_has_twelve_lines_and_new_sections():
+    r = ss.analyze("We shipped the release, ensuring alignment. " * 4 + "Short text. " * 40)
+    lines = ss.summarize(r).splitlines()
+    assert len(lines) == 12
+    assert lines[8].startswith("repetition: ") and lines[9].startswith(
+        "grammar: participial tails "
+    )
+    assert lines[10].startswith("sentence tail: over-30 ")
+    assert lines[11].startswith("nominalization hits: ")
+    assert "not measured (under 150 words)" in ss.summarize(ss.analyze("Short text. " * 5))
+    assert "  ·" not in ss.summarize(ss.analyze("Short text. " * 5))
+
+
+def test_summarize_preserves_curly_quotes_in_participial_tail_hits_without_u_escapes():
+    # Review issue 1 (Critical): json.dumps defaults to ensure_ascii=True, which
+    # mangles curly quotes into \uXXXX escapes in a table SKILL.md tells the
+    # model to quote verbatim. (A curly apostrophe between word characters is
+    # normalized to ASCII by design before analysis, so it can't probe this.)
+    left_dq, right_dq = chr(0x201C), chr(0x201D)
+    text = f"We rewrote the guide, quoting {left_dq}you{right_dq} directly for clarity."
+    s = ss.summarize(ss.analyze(text))
+    assert f"{left_dq}you{right_dq}" in s
+    assert "\\u201c" not in s and "\\u201d" not in s

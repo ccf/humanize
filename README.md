@@ -6,13 +6,16 @@ flattening the author's voice.
 
 It is grounded in [StoryScope](https://github.com/jenna-russell/storyscope)
 (Russell, Rajendhran, Pham, Iyyer, Wieting, *StoryScope: Investigating
-idiosyncrasies in AI fiction*, [arXiv:2604.03136](https://arxiv.org/abs/2604.03136)),
-which measured 304 narrative and stylistic features on 61,575 stories and found
-that AI writing converges on shared defaults while human writing disperses.
-This plugin turns the 77 features with the largest human-vs-AI gaps into an
-audit checklist, adds the surface-level tells StoryScope deliberately excluded,
-and pairs both with a dependency-free scanner for the numbers a model can't
-eyeball.
+idiosyncrasies in AI fiction*,
+[arXiv:2604.03136](https://arxiv.org/abs/2604.03136)), which measured 304
+narrative and stylistic features on 61,575 stories and found that AI writing
+converges on shared defaults while human writing disperses. This plugin turns
+the 77 features with the largest human-vs-AI gaps into an audit checklist,
+adds the surface-level tells StoryScope deliberately excluded, and pairs both
+with a dependency-free scanner for the numbers a model can't eyeball. v0.2
+adds a grammar and repetition layer from register and reader-perception
+studies (Reinhart et al. 2025; Jakesch et al. 2023; Herbold et al. 2023 and
+others); every cited number resolves in `references/SOURCES.md`.
 
 ## Install
 
@@ -90,6 +93,9 @@ Rewrite (excerpt):
   choice, and the report says so.
 - **Numbers are evidence, not verdicts.** This is a writing tool. It never
   claims text is undetectable or "certified human".
+- **Register and proficiency are not tells.** Formal, plain-language,
+  technical, and second-language prose share the measured AI profile; the
+  plugin measures it and never infers authorship from it.
 
 ## What's inside
 
@@ -103,8 +109,11 @@ plugins/humanize/
       style-tells.md             20 StoryScope style features with base rates
       narrative-tells.md         57 StoryScope narrative features (fiction only)
       model-fingerprints.md      Claude / GPT / Gemini / DeepSeek / Kimi tendencies
-    scripts/surface_scan.py      stdlib-only metrics: burstiness, punctuation,
-                                 tricolons, not-but, wordlists, closers
+      SOURCES.md                 citation registry (not loaded at runtime)
+    scripts/surface_scan.py      stdlib-only metrics: burstiness and sentence tails, punctuation,
+                                 tricolons, not-but, wordlists, closers, repeated phrases,
+                                 participial tails, container nouns, nominalization hits,
+                                 disclaimer opener
 data/                            StoryScope taxonomy + computed feature gaps
 tools/gen_tell_scaffold.py       regenerate reference scaffolds from the data
 tests/                           pytest; no network, no LLM calls
@@ -128,8 +137,9 @@ compare.
 
 ## Credit and license
 
-MIT. StoryScope code and data are MIT-licensed; base rates in the reference
-docs are computed from their released `storyscope_features.parquet` (see
-`data/README.md`). They were measured on fiction and are used here as evidence,
-not verdicts. The AI fiction test fixture is from StoryScope's released
-dev split; the human fiction fixture is public domain.
+MIT. StoryScope code and data are MIT-licensed; `Base rate:` lines are
+computed from their released `storyscope_features.parquet` (see
+`data/README.md`); every other cited number carries an `[author-year]` key
+resolved in `references/SOURCES.md`. Base rates were measured on fiction and
+are used here as evidence, not verdicts. The AI fiction test fixture is from
+StoryScope's released dev split; the human fiction fixture is public domain.

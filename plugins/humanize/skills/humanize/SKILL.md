@@ -7,8 +7,8 @@ argument-hint: "[path | text] [--audit-only] [--fiction | --prose]"
 # Humanize
 
 Make prose read as natural human writing by finding and removing the tells that
-mark it as AI-generated. Grounded in StoryScope (Russell et al., 2026): AI
-writing converges on shared defaults; human writing disperses.
+mark it as AI-generated. Grounded in StoryScope (Russell et al., 2026) and
+register studies: AI converges on shared defaults; human writing disperses.
 
 Read `references/principles.md` first, every time.
 
@@ -24,10 +24,8 @@ was invoked. Follow all six steps below.
 
 ## Invocation (`/humanize` only)
 
-This section applies only when the user typed `/humanize …`. When the skill
-activates on its own — drafting mode, or a natural-language request like
-"humanize this" — there are no arguments: skip this section and work on the
-text the conversation is about.
+Applies only when the user typed `/humanize …`. On auto-invoke (drafting
+mode or a natural-language request) there are no arguments: skip this section.
 
 Arguments: $ARGUMENTS
 
@@ -60,6 +58,10 @@ Load `references/principles.md`, `references/surface-tells.md`, and
 generating model or asks which model wrote it. Honor a `--fiction` / `--prose`
 override if given.
 
+In `expository` prose, nominalizations, container nouns, and participial
+tails are native register — prompts to look, not tells, unless extreme for
+the length.
+
 ### 2. Scan
 
 If the text is 80 words or longer, run the scanner and keep the output:
@@ -90,7 +92,10 @@ Walk every loaded tell list. For each tell you judge present, record:
 - the base rate line from the reference, or the scan number
 
 Rank by strength of evidence. Report **at most ten**. For texts under ~300
-words, quote raw counts from `punct.counts`, not per-1k rates. Format:
+words, quote raw counts from `punct.counts`, not per-1k rates. Quote
+`repetition.phrases` and `grammar.*.hits` verbatim. `nominalization.hits`
+never become a row. Other studies' ratios never go in the base-rate column.
+Format:
 
 ```
 | # | Tell | Evidence | Base rate / metric |
@@ -119,16 +124,22 @@ In priority order:
    let a plain sentence stay plain; name an emotion once instead of embodying
    it again; stop at the climax; allow a specific real-world reference where
    the author plausibly would.
-4. Make `addition`-tagged fixes only when the inferred voice would plausibly do
+4. Do not strip passives by reflex: GPT-4o (2024-era) used the agentless
+   passive at about half the human rate (Reinhart et al. 2025). Recast one
+   only when the inferred voice or a fired tell calls for it.
+5. Make `addition`-tagged fixes only when the inferred voice would plausibly do
    that, and list them under "Choices you may want to reverse".
-5. Match the inferred voice. Terse stays terse.
+6. Match the inferred voice. Terse stays terse.
 
 ### 6. Verify
 
 Re-run the scanner on the rewrite. Show a before/after line for each metric
-that changed materially. Confirm no fact was dropped by re-reading both. Never
-describe the result as undetectable, as passing a detector, or as certified
-human. It is better writing; say that.
+that changed materially. Verify by the scan and quoted spans, not by whether
+it reads human to you. If the rewrite removed every long sentence
+(`sentence_len.max` fell hard) or flattened the burstiness (`cv` fell), say so
+and reread: converging is a failure even as tell counts fall. Confirm no fact
+was dropped by re-reading both. Never describe the result as undetectable, as
+passing a detector, or as certified human. It is better writing; say that.
 
 ## Output shape (audit mode)
 

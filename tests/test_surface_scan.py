@@ -734,6 +734,27 @@ def test_prep_led_intermediate_segment_with_a_finite_verb_is_a_clause():
         assert ss.participial_tails([s]) == [], s
 
 
+def test_subordinator_led_intermediate_segment_stays_opener_internal():
+    # Bugbot PR #6 comment 4002782444: A13's finite-verb check ran on every
+    # PREP_SUB-led intermediate segment, including subordinator-led ones (after,
+    # when, ...). A subordinate clause always carries a verb and its own comma
+    # closes it, so the following -ing word is still a gerund subject, not a
+    # tail -- the guard must stay regardless of that verb.
+    for s in (
+        "However, after the audit closed, filing became routine.",
+        "Although costs rose, when the audit closed, filing became routine.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    # A13's genuine-clause detection (finite verb in a non-subordinator
+    # preposition-led or plain multi-word segment) still fires correctly.
+    for s in (
+        "However, with the new vendor the team shipped faster, cutting the backlog.",
+        "Although costs rose, with the new vendor the team hired fast, doubling headcount.",
+        "After the launch, the board met, approving the plan.",
+    ):
+        assert ss.participial_tails([s]) != [], s
+
+
 def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():
     s = ["We shipped, ensuring " + " ".join(["alignment"] * 12) + " more."]
     text = ss.participial_tails(s)[0]["text"]

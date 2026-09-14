@@ -7,7 +7,7 @@ StoryScope (arXiv 2604.03136). Spec and plan: `docs/design/`. Changelog: `CHANGE
 
 ```
 uv sync                                   # first time
-uv run pytest -q                          # 99 tests, must be warning-free
+uv run pytest -q                          # 100 tests, must be warning-free
 uv run ruff format <files> && uv run ruff check --fix <files>
 claude plugin validate --strict .
 uv run python plugins/humanize/skills/humanize/scripts/surface_scan.py --text <file>

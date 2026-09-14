@@ -374,14 +374,12 @@ FINITE_AUX = frozenset(
     can could should may might must""".split()
 )
 IRREGULAR_PAST = frozenset(
-    """rose fell grew went took made held led came became began brought built
-    bought chose drew drove felt fought found gave got kept knew left lost met
-    paid put ran said saw sold sent set sat shook shut sang slept spoke spent
-    stood struck taught told thought threw understood woke won wrote cut hit
-    let read spread split quit hurt cost bent lent dealt meant swept wept fed
-    bled fled sped laid lay hung swung stuck dug spun shone rode rang sank
-    drank ate flew froze hid bit lit slid stole tore wore wove swore broke
-    forgot forgave arose awoke overcame undertook withdrew""".split()
+    """fell grew went took held led came became began brought built bought
+    chose drew drove felt fought gave got kept knew met paid ran said sold
+    sent sat shook sang slept spent stood struck taught told thought threw
+    understood wrote dealt swept wept sought caught swung dug rode rang sank
+    drank ate flew froze slid stole tore wore wove swore forgot forgave
+    arose awoke overcame undertook withdrew""".split()
 )
 _PARTICIPIAL_TAIL_RE = re.compile(r",\s+(?:\w+ly\s+)?(\w+ing)\b(?!-)", re.I)
 # En dash terminates a clause only when whitespace follows it, so a numeric

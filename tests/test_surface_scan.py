@@ -672,6 +672,31 @@ def test_participial_tail_guard_evaluates_whole_prefix_not_just_first_raw_comma(
     assert ss.participial_tails(["Costs rose, driving the decision."]) != []
 
 
+def test_irregular_past_homographs_pruned_from_the_finite_verb_veto():
+    # Bugbot PR #6 comment 4002562248: the original IRREGULAR_PAST list included
+    # present/past homographs and common nouns/adjectives (cost, left, set, rose,
+    # ...), so a preposition-led opener containing one failed the verbless test
+    # and a gerund subject was wrongly reported as a trailing participial.
+    for s in (
+        "At low cost, shipping continued.",
+        "On the left, hiring slowed.",
+        "In the rose garden, planting began.",
+        "In the first set, serving improved.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    # Unambiguous past forms still veto the opener correctly.
+    assert ss.participial_tails(["Under the plan costs fell, driving the decision."]) != []
+    assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
+    # Bugbot's companion finding (present-tense remainder after an opener) is
+    # already handled by the revised A7 segment rule; no new code needed here.
+    assert (
+        ss.participial_tails(
+            ["In practice, this approach reduces friction, enabling teams to move faster."]
+        )
+        != []
+    )
+
+
 def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():
     s = ["We shipped, ensuring " + " ".join(["alignment"] * 12) + " more."]
     text = ss.participial_tails(s)[0]["text"]

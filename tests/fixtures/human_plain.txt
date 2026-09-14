@@ -1,0 +1,97 @@
+One of the most popular plain language myths is that you have to “dumb down” your content so that everyone can read it. That’s not true.
+
+The first rule of plain language is: write for your audience. Use language your audience understands and feels comfortable with. Take your audience’s current level of knowledge into account. Don’t write for an 8th-grade class if your audience is composed of PhD candidates, small business owners, working parents, or immigrants. Only write for 8th graders if your audience is, in fact, an 8th-grade class.
+
+Know the expertise and interest of your average reader, and write to that person. Don’t write to the experts, the lawyers, or your management, unless they are your intended audience.
+
+Make sure you do your research to understand who your audience is and test your assumptions.
+
+Let’s face it, people only want to know what applies to them. The best way to grab and hold someone’s attention is to figure out who they are and what they want to know. Put yourself in their shoes; it will give you a new perspective.
+
+Tell your audience why the material is important to them. Say, “If you want a research grant, here’s what you have to do.” Or, “If you want to mine federal coal, here’s what you should know.” Or, “If you’re planning a trip to Rwanda, read this first.”
+
+In order to write for your users, you need to know who they are! Here are some general tips to help you identify your users.
+
+There are many techniques to help you learn about your users. For more details and best practices, visit usability.gov.
+
+Understanding what users are trying to do when visiting your website or reading your communications will help you write clearly and focus on their needs.
+
+Think about how well your communications support people in getting things done. People come to government websites and services with a specific task in mind. If your content doesn’t help them complete that task, they’ll get frustrated and potentially leave.
+
+You need to identify the purpose of your website to help clarify the top tasks it should help people accomplish.
+
+Even though your document may affect a thousand or a million people, you are speaking to the one person who is reading it. When your writing reflects this, it’s more economical and has a greater impact.
+
+When you use “you” to address users, they are more likely to understand what their responsibility is.
+
+It’s especially important to define “you” when writing to multiple audiences.
+
+If you use a question-and-answer format, you should assume that the user is the one asking the questions. Use “I” in the questions to refer to the user. Use “we” in the responses to represent your agency.
+
+By using “we” to respond to questions, you state clearly what your agency requires and what your agency’s responsibilities are. Using “we” makes your agency more approachable and also helps you use fewer words. You can define “we” in the definitions sections of your document if that will help the user.
+
+You can avoid awkwardness by using “you” to address the reader directly, rather than using “he or she” or “his or her.”
+
+Make sure you use pronouns that clearly refer to a specific noun. If a pronoun could refer to more than one person or object in a sentence, repeat the name of the person or object or rewrite the sentence.
+
+Use singular nouns and verbs to prevent confusion about whether a requirement applies to an individual or several groups. In the following example, the user might think that they need to file applications at several offices.
+
+For more details on addressing multiple users, see Address separate audiences separately.
+
+An important part of writing for your audience is addressing separate audiences separately. Many documents and websites address more than one audience. Mixing material intended for different audiences may confuse readers. By addressing different audiences in the same place, you make it harder for each audience to find the material that applies to them. In regulations, this may make it difficult for each audience to comply with your agency’s requirements.
+
+The following example shows a regulation (40 CFR 745) that treats each regulated group separately in its own subpart, rather than mixing all the groups together. For an example of a rule that does not address separate groups separately, see 5 CFR 1320.
+
+Organization is key. Start by stating your purpose and the bottom line. Lay things out in a logical order. Put the most important information at the beginning and include background information (when necessary) toward the end.
+
+People read government websites and documents to get answers. They want to know how to do something or what happens if they don’t do something—and they want to gain this knowledge quickly. Organize your writing so it’s easy to follow along.
+
+Think through the questions your users likely have and then organize the material in a logical order.
+
+For regulations and other complex documents, create a comprehensive table of contents. Your table of contents should be a reliable roadmap that users can follow to quickly find what they need.
+
+Present the steps chronologically, in the order your user and your agency will follow them. The table of contents below is organized in a logical sequence for a grant program.
+
+Another useful organizing principle is to put general information first, and specialized information or exceptions later. That way, the material that addresses most readers in most situations comes first. For some documents this will work well along with a chronological organization. In others, it may be the primary organizing principle.
+
+Crafting documents with four, five, or even more levels makes it difficult for your audience to keep track of where they are in the process. You should address this problem in your initial structuring of the document.
+
+If you tell your reader what they’re going to read about, they’re less likely to have to read your paragraph again. Headings help, but they’re not enough. Establish a context for your audience before you provide them with the details. If you flood readers with details first, they become impatient and may resist hearing your message. A good topic sentence draws the reader in.
+
+A side benefit of good topic sentences (and good headings) is that they help you see if your document is well-organized. If it isn’t, topic sentences make it easier for you to rearrange your material.
+
+Start with your main idea – not an exception.
+
+When you start a sentence with an introductory phrase or clause beginning with “except,” you almost certainly force the reader to reread your sentence. You are stating an exception to a rule before you have stated the underlying rule. The audience must absorb the exception, then the rule, and then usually has to go back to grasp the relationship between the two. Material is much easier to follow if you start with the main idea and then cover exceptions and conditions.
+
+In the first version, the audience has to decide whether to jump immediately down to paragraph (b) or continue reading to the end of the sentence. This means the audience is focusing on reading strategy, not on your content.
+
+There is no absolute rule about where to put exceptions and conditions. Put them where they can be absorbed most easily. In general, the main point of the sentence should be as close to the beginning as possible.
+
+Use the word if for conditions. Use when (not where), if you need if to introduce another clause or if the condition occurs regularly.
+
+If an exception or condition is just a few words, and seeing it first will avoid misleading users, put it at the beginning instead of the end.
+
+If an exception or condition is long and the main clause is short, put the main clause first and then state the exception or condition.
+
+If a condition and the main clause are both long, foreshadow the condition and put it at the end of the sentence. If there are several conditions, lead with “if” or a phrase such as “in the following circumstances.”
+
+Use a list (like the example above) if your sentence contains multiple conditions or exceptions.
+
+Use numbers or letters to designate items in a list if future reference or sequence is important (for example, in a regulation). Otherwise, use bullets.
+
+Avoid using an exception, if you can, by stating a rule or category directly rather than describing that rule or category by stating its exceptions.
+
+But use an exception if it avoids a long and cumbersome list or elaborate description.
+
+A topic sentence may provide a transition from one paragraph to another. But a transition word or phrase (usually in the topic sentence) clearly tells the audience whether the paragraph expands on the paragraph before, contrasts with it, or takes a completely different direction.
+
+Pointing words – including this, that, these, those, and the – refer directly to something already mentioned. They point to an antecedent. If your preceding paragraph describes the process of strip mining, and your next paragraph begins with “this process causes…,” the word this makes a clear connection between paragraphs.
+
+Echo links are words or phrases that echo a previously mentioned idea. They often work together with pointing words.
+
+In the example above, you’ve just written a paragraph about how strip mining removes the top surface of the land to get at the coal under it. If you then begin the next paragraph with “this scarring of the earth,” the words “scarring of the earth” are an echo of the mining process described in the previous paragraph.
+
+Explicit connectives – further, also, however, and therefore — supply transitions.
+
+Explicit connectives between sentences and paragraphs can be overdone, but more often we simply overlook using them. Being too familiar with our own material, we think they aren’t needed. Readers, on the other hand, find them helpful in following our train of thought.

@@ -60,9 +60,12 @@ run_claude() {
   command -v claude >/dev/null || { echo "SKIP claude (not installed)"; return; }
   local f="$OUT/claude-code.md"
   claude plugin disable humanize@humanize >/dev/null 2>&1 || true
+  # A ^C or kill mid-run must not leave the user's installed plugin disabled.
+  trap 'claude plugin enable humanize@humanize >/dev/null 2>&1 || true' EXIT INT TERM
   (cd "$ROOT" && claude -p "$REQUEST" --plugin-dir . --output-format stream-json --verbose \
       --allowedTools "Bash,Read,Glob,Grep" > "$f.jsonl" 2>&1)
   claude plugin enable humanize@humanize >/dev/null 2>&1 || true
+  trap - EXIT INT TERM
   local auth_line
   auth_line="$(check_auth < "$f.jsonl")"
   if [ -n "$auth_line" ]; then
@@ -219,10 +222,12 @@ run_hermes() {
   local dest="$HOME/.hermes/skills/writing/humanize" f="$OUT/hermes.md" raw
   [ -e "$dest" ] && { echo "SKIP hermes ($dest already exists; not touching it)"; return; }
   mkdir -p "$(dirname "$dest")" && cp -R "$ROOT/skills/humanize" "$dest"
+  # $REQUEST names the fixture by a project-relative path; run from $ROOT so it resolves
+  # no matter which directory this script itself is invoked from.
   if hermes --help 2>/dev/null | grep -q -- ' -z'; then
-    raw="$(hermes -z "$REQUEST" 2>&1)"
+    raw="$(cd "$ROOT" && hermes -z "$REQUEST" 2>&1)"
   else
-    raw="$(hermes chat -q "$REQUEST" -Q 2>&1)"
+    raw="$(cd "$ROOT" && hermes chat -q "$REQUEST" -Q 2>&1)"
   fi
   rm -rf "$dest"
   local auth_line

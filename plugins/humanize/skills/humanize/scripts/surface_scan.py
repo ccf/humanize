@@ -385,17 +385,27 @@ def _content_words(text: str) -> set[str]:
     return {w.lower() for w in words(text) if len(w) > 4 and w.lower() not in _STOPWORDS}
 
 
+def _starts_with_closer(paragraph: str) -> bool:
+    head = paragraph.lower().lstrip("*_#> ")
+    return any(
+        head.startswith(c + ",") if c in _ONE_WORD_CLOSERS else head.startswith(c) for c in CLOSERS
+    )
+
+
 def summary_closer(paragraphs: list[str]) -> bool:
     """A paragraph among the last three opens with a closer phrase and restates the body
-    before it."""
+    before it. Trailing sign-off lines (under six words) are ignored when choosing the window."""
     if len(paragraphs) < 2:
         return False
-    for idx in range(max(1, len(paragraphs) - 3), len(paragraphs)):
-        head = paragraphs[idx].lower().lstrip("*_#> ")
-        if not any(
-            head.startswith(c + ",") if c in _ONE_WORD_CLOSERS else head.startswith(c)
-            for c in CLOSERS
-        ):
+    end = len(paragraphs)
+    while (
+        end > 1
+        and len(words(paragraphs[end - 1])) < 6
+        and not _starts_with_closer(paragraphs[end - 1])
+    ):
+        end -= 1
+    for idx in range(max(1, end - 3), end):
+        if not _starts_with_closer(paragraphs[idx]):
             continue
         body: set[str] = set()
         for earlier in paragraphs[:idx]:
@@ -482,6 +492,13 @@ def main(argv: list[str] | None = None) -> None:
                 text = fh.read()
         except OSError as e:
             print(f"surface_scan: cannot read {args.path}: {e.strerror}", file=sys.stderr)
+            sys.exit(1)
+        except UnicodeDecodeError:
+            print(
+                f"surface_scan: {args.path} is not a text file — extract it first "
+                "(.docx/.pdf: use the docx or pdf skill; see SKILL.md step 2)",
+                file=sys.stderr,
+            )
             sys.exit(1)
     else:
         text = sys.stdin.read()

@@ -23,6 +23,15 @@ eyeball.
 
 Requires Python 3.9+ on `PATH` for the scanner. No other dependencies.
 
+Optional, for Word/PDF/PowerPoint inputs: Anthropic's `document-skills`
+plugin, which humanize delegates extraction to (its `docx` read path uses
+`pandoc`; `brew install pandoc` on macOS).
+
+```
+/plugin marketplace add anthropics/skills
+/plugin install document-skills@anthropic-agent-skills
+```
+
 ## Use
 
 **Automatically.** The skill activates whenever Claude drafts or edits prose.
@@ -35,6 +44,7 @@ It checks its own output against the tell lists and returns the text.
 /humanize "Great question! I'd be happy to help you navigate…"
 /humanize draft.md --audit-only
 /humanize story.md --fiction
+/humanize report.docx          # extracted via the docx skill, rewrite returned as Markdown
 ```
 
 Output: an audit table (at most ten tells, each with a quoted example and the

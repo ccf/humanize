@@ -72,6 +72,15 @@ Write pasted text to a temp file first. For the full JSON, drop `--text`. Under
 80 words, skip this step; the statistics are noise. The scanner strips code,
 links, URLs, and heading markers from Markdown before measuring.
 
+**Non-text sources** (`.docx`, `.pdf`, `.pptx`, `.odt`, `.rtf`): the scanner reads
+plain text only. Extract first — use the `docx` or `pdf` skill if installed
+(Anthropic's `document-skills` plugin) to write a temp `.md`, then scan and
+audit that. If the skill is not installed, say so and give the two commands:
+`/plugin marketplace add anthropics/skills` and
+`/plugin install document-skills@anthropic-agent-skills`; for a PDF you can
+still Read it yourself and write the text to a temp file. Deliver the rewrite
+as Markdown; if the user wants a Word file back, hand off to the `docx` skill.
+
 ### 3. Audit
 
 Walk every loaded tell list. For each tell you judge present, record:

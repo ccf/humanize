@@ -40,9 +40,12 @@ Never run bare `ruff format .` — ruff 0.16 formats Python fences inside
 
 ## Workflow
 
-Branch → PR to `main`. CI runs pre-commit, pytest (3.9 and 3.13), and plugin
-validation; Cursor Bugbot reviews every PR and re-reviews on push. Pre-commit
-hooks run on every commit; never `--no-verify`. After merging a plugin change:
+Branch → PR to `main`. `main` is protected (admins included): no direct pushes,
+the four CI jobs must pass on an up-to-date branch, and every review thread
+must be resolved — so after fixing a Bugbot finding, resolve its thread (GraphQL
+`resolveReviewThread`) before merging. CI runs pre-commit, pytest (3.9 and
+3.13), and plugin validation; Cursor Bugbot reviews every PR and re-reviews on
+push. Pre-commit hooks run on every commit; never `--no-verify`. After merging a plugin change:
 `claude plugin marketplace update humanize && claude plugin update humanize@humanize`.
 
 `tests/fixtures/expected_tells.md` is the manual acceptance checklist for skill

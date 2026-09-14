@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -122,3 +124,77 @@ def test_manifests_agree():
     assert entry["strict"] is True
     for m in (root, claude, codex, entry):
         assert "storyscope" not in json.dumps(m).lower()
+
+
+GUARD_TOKENS = (
+    "subprocess",
+    "os.system",
+    "os.popen",
+    "os.environ",
+    "getenv",
+    "shutil.rmtree",
+    "eval(",
+    "exec(",
+    "compile(",
+    "getattr(",
+    "codecs",
+    "socket",
+    "urllib",
+    "requests",
+    "# /// script",
+)
+
+
+def _guard_hits(text: str) -> list[str]:
+    hits = [t for t in GUARD_TOKENS if t != "compile(" and t in text]
+    # Bare compile() is a guard pattern; the scanner's 22 re.compile() calls are not.
+    if re.search(r"(?<!re\.)\bcompile\(", text):
+        hits.append("compile(")
+    return hits
+
+
+def test_scripts_are_guard_clean():
+    """Stricter than Hermes's skills_guard.py line regexes; also our no-network rule."""
+    scripts = sorted((ROOT / "skills").rglob("scripts/*.py"))
+    assert scripts, "no scripts found"
+    for path in scripts:
+        hits = _guard_hits(path.read_text(encoding="utf-8"))
+        assert not hits, f"{path.relative_to(ROOT)}: {hits}"
+    assert _guard_hits("import subprocess\nos.environ['X']") == ["subprocess", "os.environ"]
+
+
+def _load_packager():
+    spec = importlib.util.spec_from_file_location("pkg", ROOT / "tools/package_skill_zip.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_zip_packager_contract(tmp_path):
+    pkg = _load_packager()
+    out = pkg.build_zip(ROOT, tmp_path)
+    version = _json("plugin.json")["version"]
+    assert out.name == f"humanize-skill-{version}.zip"
+    with zipfile.ZipFile(out) as zf:
+        members = set(zf.namelist())
+    expected = {"humanize/SKILL.md", "humanize/scripts/surface_scan.py"}
+    expected |= {f"humanize/references/{p.name}" for p in (SKILL_DIR / "references").iterdir()}
+    assert members == expected, members ^ expected
+
+
+def test_zip_packager_rejects_non_spec_frontmatter(tmp_path):
+    pkg = _load_packager()
+    fake = tmp_path / "repo"
+    (fake / "skills/humanize/references").mkdir(parents=True)
+    (fake / "skills/humanize/scripts").mkdir()
+    (fake / "plugin.json").write_text('{"name": "humanize", "version": "9.9.9"}')
+    (fake / "skills/humanize/scripts/surface_scan.py").write_text("print(1)\n")
+    (fake / "skills/humanize/SKILL.md").write_text(
+        "---\nname: humanize\ndescription: x\nargument-hint: y\n---\nbody\n"
+    )
+    try:
+        pkg.build_zip(fake, tmp_path / "out")
+    except pkg.PackagingError as e:
+        assert "argument-hint" in str(e)
+    else:
+        raise AssertionError("expected PackagingError")

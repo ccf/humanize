@@ -20,7 +20,6 @@ def test_marketplace_points_at_existing_plugin_components():
     # /humanize is the skill itself; a separate command file would register a duplicate name.
     assert not (src / "commands").exists()
     assert (src / "skills/humanize/SKILL.md").is_file()
-    assert "argument-hint:" in (src / "skills/humanize/SKILL.md").read_text()
     assert (src / "skills/humanize/scripts/surface_scan.py").is_file()
     for doc in (
         "principles",

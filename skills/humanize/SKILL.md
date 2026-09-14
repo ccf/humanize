@@ -21,7 +21,7 @@ the text. No audit table, no commentary about tells.
 **Audit mode** — the user asks you to humanize existing text, or `/humanize`
 was invoked. Follow all six steps below.
 
-## Invocation (`/humanize` only)
+## Invocation (explicit only)
 
 Applies only when the user typed `/humanize …` (Codex: `$humanize …`). On
 auto-invoke there are no arguments: skip this section. Options below also
@@ -70,17 +70,17 @@ If the text is 80 words or longer, run the scanner and keep the output:
 python3 <skill folder>/scripts/surface_scan.py --text <path>
 ```
 
-`<skill folder>` is the directory holding this SKILL.md; keep the working
-directory on the user's project so `<path>` resolves. Pasted text goes to a
-temp file first; drop `--text` for full JSON. Under 80 words, skip this step.
+`<skill folder>` is the directory holding this SKILL.md; if its path was not
+shown, search for `scripts/surface_scan.py`, and if it is not found skip the
+scan and say so. Keep the working directory on the user's project so `<path>`
+resolves. Pasted text goes to a temp file first. Under 80 words, skip this step.
 
 **Non-text sources** (`.docx`, `.pdf`, `.pptx`, `.odt`, `.rtf`): the scanner reads
-plain text only. Extract first with the harness's document skills (Anthropic's
-`docx`/`pdf` skills ship with Claude Code's `document-skills` plugin and with
-Claude Desktop) to write a temp `.md`, then scan and audit that. In claude.ai the
-file is an attachment: convert it in the sandbox (pandoc, pdfplumber). Without
-document skills, read the file yourself if you can and write the text to a temp
-file; otherwise ask for a text export. Deliver Markdown; a Word file via `docx`.
+plain text only. Extract first with the harness's document skills (`docx`, `pdf`)
+to write a temp `.md`, then scan and audit that; in claude.ai convert the
+attachment in the sandbox. Without document skills, read the file yourself if
+you can and write the text to a temp file; otherwise ask for a text export.
+Deliver Markdown; a Word file via `docx`.
 
 ### 3. Audit
 

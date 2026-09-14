@@ -31,14 +31,14 @@ text the conversation is about.
 
 Arguments: $ARGUMENTS
 
-If that line is empty or still reads literally as `$ARGUMENTS`, nothing was
-passed. Otherwise resolve the target:
-- Strip any flags (`--audit-only`, `--fiction`, `--prose`) from the arguments.
-- If what remains is a path to an existing file, read that file.
-- Otherwise treat what remains as the text itself.
-- If nothing remains, use the most recent prose you produced in this
-  conversation, or the text the user most recently shared. If there is none,
-  ask what to humanize.
+Treat an empty line, or one that still reads literally as `$ARGUMENTS`, as no
+arguments. Then resolve the target, in order:
+1. Strip any flags (`--audit-only`, `--fiction`, `--prose`) from the arguments.
+2. If what remains is a path to an existing file, read that file.
+3. Else if anything remains, treat it as the text itself.
+4. Else (no arguments, or flags only): use the most recent prose you produced
+   in this conversation, or the text the user most recently shared. If there is
+   none, ask what to humanize.
 
 Flags:
 - `--audit-only` — stop after step 3 (the audit table). Do not rewrite.

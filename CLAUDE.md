@@ -10,7 +10,7 @@ uv sync                                   # first time
 uv run pytest -q                          # 100 tests, must be warning-free
 uv run ruff format <files> && uv run ruff check --fix <files>
 claude plugin validate --strict .
-uv run python plugins/humanize/skills/humanize/scripts/surface_scan.py --text <file>
+uv run python skills/humanize/scripts/surface_scan.py --text <file>
 python3 tools/gen_tell_scaffold.py style|narrative   # regenerate reference scaffolds
 ```
 

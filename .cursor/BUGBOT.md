@@ -6,12 +6,12 @@ it. Design spec: `docs/design/2026-09-13-humanize-plugin-design.md` and
 
 ## Invariants to enforce
 
-- `plugins/humanize/skills/humanize/scripts/surface_scan.py` imports only the
+- `skills/humanize/scripts/surface_scan.py` imports only the
   Python standard library and runs on Python 3.9+. Flag any third-party import
   or 3.10+ syntax (match statements, `X | Y` in runtime positions, PEP 604 in
   non-annotation code).
-- Nothing under `tests/` or `plugins/**/scripts/` makes network or LLM calls.
-- A `Base rate:` line in `plugins/humanize/skills/humanize/references/*.md`
+- Nothing under `tests/` or `skills/**/scripts/` makes network or LLM calls.
+- A `Base rate:` line in `skills/humanize/references/*.md`
   must trace to a row in `data/storyscope_feature_gaps.csv` (or a future CSV
   documented in `data/README.md`; none added in v0.2). If a PR changes a
   number, check the CSV row. Any other number must sit on a `Scan:`, `Rule

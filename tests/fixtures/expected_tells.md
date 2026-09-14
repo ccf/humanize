@@ -70,9 +70,10 @@ Manual checklist for anyone editing `SKILL.md` or the references. Run
 - Long sentence tail — `sentence_len.pct_over_30` ≈ 42.9%, deliberately higher than ai_report.txt's 0.0%, since 18th-century periodic sentences run long; this is exactly the direction `test_gate_direction_long_sentence_tail` expects.
 
 ## human_plain.txt — should NOT fire
-- Trailing participial clause and container-noun phrase (`grammar.participial_tail.count == 0`, `grammar.container_of.count == 0`; four genuine trailing-participial sentences were excluded during fixture curation for tripping this cap — see `PROVENANCE.md`)
+- Container-noun phrase (`grammar.container_of.count == 0`)
 - Safety disclaimer opener
-- Verbatim phrase repetition above the pinned band (max repeated-phrase count stays at 2, e.g. "if an exception or condition is")
+- Verbatim phrase repetition (`repetition.phrases == []` — no repeated phrase in this excerpt at all)
 
 ## human_plain.txt — may legitimately show
-- Flat sentence-length profile — `sentence_len.cv` ≈ 0.412, `longest_flat_run` 9, `pct_over_30` ≈ 1.9%. Government plain-language guidance is deliberately short and uniform, so these measures sit in "AI territory" on purpose. `test_gate_fairness_bands_are_recorded_not_judged` asserts the plugin records these values without reading the flatness as authorship evidence (principle 8).
+- One trailing participial clause — "Pronouns help the audience picture themselves in the text and relate to what you're saying. More than any other single technique, using 'you' pulls users into the information and makes it relevant to them." `grammar.participial_tail.count == 1`, sitting exactly at the specificity cap (`<= 1`) with no fixture curation applied — this is genuine, unedited government prose, kept verbatim per the mechanical extraction rule in `PROVENANCE.md`.
+- Flat sentence-length profile — `sentence_len.cv` ≈ 0.349, `longest_flat_run` 9, `pct_over_30` 0.0%. Government plain-language guidance is deliberately short and uniform, so these measures sit in "AI territory" on purpose. `test_gate_fairness_bands_are_recorded_not_judged` asserts the plugin records these values without reading the flatness as authorship evidence (principle 8).

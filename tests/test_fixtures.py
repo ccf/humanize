@@ -57,12 +57,12 @@ HUMAN_SPECIFICITY = ("human_fiction_excerpt.txt", "human_formal.txt", "human_pla
 # Pinned at fixture creation 2026-09-14; see fixtures/PROVENANCE.md. Values on
 # human_plain.txt sit in "AI territory" and are asserted so a flat profile is
 # never read as authorship evidence (principle 8).
-HUMAN_PLAIN_BANDS = {"pct_over_30": (1.5, 2.3), "cv": (0.3, 0.5), "longest_flat_run": (8, 10)}
+HUMAN_PLAIN_BANDS = {"pct_over_30": (0.0, 2.0), "cv": (0.3, 0.4), "longest_flat_run": (8, 10)}
 HUMAN_FORMAL_NOMINALIZATION_BAND = (10, 12)
 HUMAN_MAX_REPEAT_COUNT = {
     "human_fiction_excerpt.txt": 3,
     "human_formal.txt": 3,
-    "human_plain.txt": 3,
+    "human_plain.txt": 1,
 }
 
 

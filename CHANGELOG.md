@@ -6,6 +6,27 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-14
+
+### Added
+- Repetition block: verbatim phrase and whole-sentence repeat detection.
+- Grammar block: participial-tail and container-noun detection; nominalization
+  hits.
+- Disclaimer-opener detection and sentence-tail keys in the scan output.
+- Four new `--text` summary lines; five new surface tells.
+- Principle 8: register and proficiency are not tells.
+- `references/SOURCES.md`, the citation registry for non-StoryScope numbers.
+- Report fixtures with sensitivity, specificity, direction, and pinned
+  fairness gates.
+
+### Changed
+- `SKILL.md`: register gate, passive guard, and convergence check.
+- Provenance invariant now allows cited non-StoryScope numbers on `Scan:`
+  lines.
+
+### Fixed
+- Apostrophe look-alike glyphs between letters.
+
 ## [0.1.2] - 2026-09-14
 
 ### Added
@@ -61,7 +82,8 @@ Initial release (#1).
   CI (pre-commit, pytest on Python 3.9 and 3.13, `claude plugin validate
   --strict`), and a Bugbot review guide.
 
-[Unreleased]: https://github.com/ccf/humanize/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/ccf/humanize/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ccf/humanize/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/ccf/humanize/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ccf/humanize/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ccf/humanize/releases/tag/v0.1.0

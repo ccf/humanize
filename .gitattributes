@@ -1,0 +1,14 @@
+# Every clone gets LF, whatever the host's core.autocrlf. The Claude Desktop skill
+# loader rejects SKILL.md frontmatter that arrives as CRLF (anthropics/claude-code
+# #36902); tests/test_portability.py asserts no tracked text file carries a CR.
+* text=auto eol=lf
+
+# Binary files (none tracked today; listed so a future asset is never normalized)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary
+*.parquet binary
+*.pdf binary
+*.docx binary

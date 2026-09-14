@@ -237,3 +237,30 @@ def test_study_count_matches_sources():
         for token in found:
             value = int(token) if token.isdigit() else NUMBER_WORDS[token.lower()]
             assert value == n, f"{rel} says {token}, SOURCES.md has {n}"
+
+
+TEXT_SUFFIXES = {".md", ".py", ".json", ".toml", ".yml", ".yaml", ".sh", ".txt", ".csv", ".cfg"}
+SKIP_DIRS = {
+    ".git",
+    ".venv",
+    "node_modules",
+    "dist",
+    "__pycache__",
+    ".superpowers",
+    ".pytest_cache",
+}
+
+
+def test_tracked_text_files_use_lf():
+    """The Claude Desktop skill loader rejects CRLF frontmatter; .gitattributes forces LF."""
+    offenders = []
+    for path in ROOT.rglob("*"):
+        if any(part in SKIP_DIRS for part in path.parts):
+            continue
+        is_text = path.suffix in TEXT_SUFFIXES or path.name == ".gitattributes"
+        if not path.is_file() or not is_text:
+            continue
+        if b"\r" in path.read_bytes():
+            offenders.append(str(path.relative_to(ROOT)))
+    assert not offenders, offenders
+    assert "eol=lf" in (ROOT / ".gitattributes").read_text(encoding="utf-8")

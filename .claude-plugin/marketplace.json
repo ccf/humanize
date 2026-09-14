@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Measures prose against 13 studies of how AI and human writing differ, from word choice to sentence rhythm to story shape, then rewrites the tells out.",
-    "version": "0.3.0"
+    "version": "0.3.1"
   },
   "plugins": [
     {
       "name": "humanize",
       "description": "Audits a draft layer by layer (vocabulary, punctuation, sentence shape, openers, closers, grammar, narrative, per-model habits) against 13 studies, then rewrites what it flags in the author's voice.",
       "source": "./",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": { "name": "ccf" },
       "license": "MIT",
       "keywords": ["humanize", "writing", "prose", "editing", "style", "ai-writing", "rewriting", "linguistics"],

@@ -30,8 +30,8 @@ recorded in `docs/acceptance/`.
 | Cursor | `cp -R skills/humanize ~/.cursor/skills/` (every project) or `.cursor/skills/` (this project) | the skill appears in the `/` menu | `/humanize …` or automatically |
 | Hermes Agent | `hermes skills install ccf/humanize/humanize --category writing`; in a running session, `/reload-skills` | `hermes skills list` | `/humanize …` or automatically |
 | Any Agent-Skills harness | `npx skills add ccf/humanize` or `cp -R skills/humanize ~/.agents/skills/` | harness-specific | harness-specific |
-| Claude Desktop — Cowork | Customize → Plugins → Add from repository `ccf/humanize` → install `humanize` | listed under Customize → Plugins | `/` or `+` picker, or automatically |
-| Claude Desktop — chat (claude.ai) | Customize → Skills → upload `humanize-skill-<version>.zip` from the [latest release](https://github.com/ccf/humanize/releases); "Code execution and file creation" must be on | listed under Customize → Skills | automatically, or the sidebar `/` menu |
+| Claude Desktop (macOS, Windows) | Customize → Plugins → Add from repository `ccf/humanize` → install `humanize` → restart the app | listed under Customize → Plugins; `/humanize:humanize` in the picker | `/` or `+` picker, or automatically, in chats and Cowork |
+| claude.ai on the web or mobile, or without a linked repo | Customize → Skills → upload `humanize-skill-<version>.zip` from the [latest release](https://github.com/ccf/humanize/releases); "Code execution and file creation" must be on | listed under Customize → Skills | automatically, or the sidebar `/` menu |
 
 Notes:
 
@@ -44,8 +44,11 @@ Notes:
   skipped and the audit proceeds from reading alone. `hermes plugins install` also works on
   recent builds but installs the package disabled and read-only; prefer `hermes skills install`.
   Installing from a raw `SKILL.md` URL fetches one file and is not supported.
-- **Claude Desktop** picks up a Cowork plugin update only when `version` changes. In claude.ai
-  chat the skill triggers by description; picking it from the `/` menu passes no arguments.
+- **Claude Desktop** picks up a plugin update only when `version` changes, and it needs a
+  restart after installing or updating a plugin: until then the `/` menu can list a skill the
+  app cannot yet invoke ("Unknown command: /humanize:humanize"). The zip is only for claude.ai
+  without the Desktop app. In claude.ai chat the skill triggers by description; picking it from
+  the `/` menu passes no arguments.
 - **Word, PDF, PowerPoint inputs.** humanize delegates extraction to the harness's document
   skills. In Claude Code that is Anthropic's `document-skills` plugin (`/plugin marketplace add
   anthropics/skills`, `/plugin install document-skills@anthropic-agent-skills`; its `docx` read

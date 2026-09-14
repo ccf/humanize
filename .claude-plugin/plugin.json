@@ -1,6 +1,6 @@
 {
   "name": "humanize",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Audits a draft layer by layer (vocabulary, punctuation, sentence shape, openers, closers, grammar, narrative, per-model habits) against 13 studies, then rewrites what it flags in the author's voice.",
   "author": { "name": "ccf" },
   "license": "MIT",

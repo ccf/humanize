@@ -189,3 +189,22 @@ Claude Code: PASS. Codex: PASS. Cursor: SKIP (not authenticated on this machine)
 Hermes: SKIP (not authenticated on this machine). Both SKIPs move to phase 2
 (post-merge, pre-tag) per the design doc's Post-review amendments, and are re-run
 after login, with transcripts committed to this directory.
+
+## Phase 2 record (post-merge, 2026-09-14)
+
+- Acceptance 3 from `main`: `codex plugin marketplace add ccf/humanize` and
+  `codex plugin add humanize@humanize` installed 0.3.0; `codex debug prompt-input`
+  lists `humanize:humanize`. Left installed.
+- Acceptance 4: `hermes skills install ccf/humanize/humanize --category writing`
+  fetched SKILL.md, all six references, and the script (resolved through the
+  skills.sh registry); `hermes skills list` shows `writing/humanize` enabled.
+- Acceptance 6: the installed Claude Code plugin upgraded 0.2.0 → 0.3.0 through the
+  root-level marketplace (`source: "./"` proven).
+- Acceptance 5a: Claude Desktop → Customize → Plugins → Add from repository
+  `ccf/humanize` installed the plugin and the skill runs in chats on macOS and on
+  Windows. Windows first answered `Unknown command: /humanize:humanize` from the
+  picker until the app was restarted — the slash menu lists the skill before the
+  invocable registry has it (cf. anthropics/claude-code #62485). The README now says
+  to restart. Acceptance 5b (zip upload) is not needed for the Desktop app; the zip
+  stays on the release for claude.ai without it.
+- Cursor and Hermes smoke transcripts: still pending login on this machine.

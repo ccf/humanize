@@ -1,21 +1,20 @@
 # humanize
 
-A Claude Code plugin that finds and removes the tells that mark prose as
-AI-generated, and rewrites it to read as natural human writing — without
-flattening the author's voice.
+An agent skill that audits prose for the tells of AI writing and rewrites them
+out, without flattening the author's voice. Runs in Claude Code, Codex, Cursor,
+Hermes Agent, Claude Desktop.
 
-It is grounded in [StoryScope](https://github.com/jenna-russell/storyscope)
-(Russell, Rajendhran, Pham, Iyyer, Wieting, *StoryScope: Investigating
-idiosyncrasies in AI fiction*,
-[arXiv:2604.03136](https://arxiv.org/abs/2604.03136)), which measured 304
-narrative and stylistic features on 61,575 stories and found that AI writing
-converges on shared defaults while human writing disperses. This plugin turns
-the 77 features with the largest human-vs-AI gaps into an audit checklist,
-adds the surface-level tells StoryScope deliberately excluded, and pairs both
-with a dependency-free scanner for the numbers a model can't eyeball. v0.2
-adds a grammar and repetition layer from register and reader-perception
-studies (Reinhart et al. 2025; Jakesch et al. 2023; Herbold et al. 2023 and
-others); every cited number resolves in `references/SOURCES.md`.
+The reference entries rest on thirteen studies. StoryScope (2026) measured 304
+narrative and stylistic features over 61,575 stories, and its widest human-vs-AI
+gaps supply the base rates. Reinhart et al. (2025) put participial modifiers at
+5.3 times the human rate and nominalization at 2.1 times. Jakesch et al. (2023)
+found repeated phrasing the strongest true signal of a text's source. Herbold et
+al. (2023) recorded a lexical-diversity reversal between model generations, a
+reminder that findings expire. humanize turns that work into an audit checklist
+plus a dependency-free scanner for the counts a model cannot eyeball; every flag
+quotes the line it came from. One pattern organizes the whole checklist: AI
+converges on shared defaults while human writing disperses. Every cited number
+resolves in `references/SOURCES.md`.
 
 ## Install
 
@@ -105,8 +104,8 @@ skills/humanize/
   references/
     principles.md
     surface-tells.md           vocabulary, punctuation, shape, discourse moves
-    style-tells.md             20 StoryScope style features with base rates
-    narrative-tells.md         57 StoryScope narrative features (fiction only)
+    style-tells.md             20 style features with StoryScope base rates
+    narrative-tells.md         57 narrative features (fiction only), StoryScope base rates
     model-fingerprints.md      Claude / GPT / Gemini / DeepSeek / Kimi tendencies
     SOURCES.md                 citation registry (not loaded at runtime)
   scripts/surface_scan.py      stdlib-only metrics: burstiness and sentence tails, punctuation,

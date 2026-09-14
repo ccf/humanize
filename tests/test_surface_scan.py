@@ -684,8 +684,9 @@ def test_irregular_past_homographs_pruned_from_the_finite_verb_veto():
         "In the first set, serving improved.",
     ):
         assert ss.participial_tails([s]) == [], s
-    # Unambiguous past forms still veto the opener correctly.
-    assert ss.participial_tails(["Under the plan costs fell, driving the decision."]) != []
+    # Unambiguous past forms still veto the opener correctly. ("fell" itself
+    # was pruned in A12 as the "one fell swoop" homograph; "grew" stands in.)
+    assert ss.participial_tails(["Under the plan costs grew, driving the decision."]) != []
     assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
     # Bugbot's companion finding (present-tense remainder after an opener) is
     # already handled by the revised A7 segment rule; no new code needed here.
@@ -695,6 +696,24 @@ def test_irregular_past_homographs_pruned_from_the_finite_verb_veto():
         )
         != []
     )
+
+
+def test_irregular_past_homographs_pruned_further_round_two_and_three():
+    # Re-review rounds 2-3 found four more homographs on the A11 keep-list that
+    # are ordinary nouns/adjectives in openers -- felt (wool felt), thought (on
+    # second thought), stole (fur stole), fell (one fell swoop) -- plus
+    # borderline spent (spent grain/fuel) and led (the lowercased "LED"
+    # acronym, which also needed the generic -ed-suffix heuristic narrowed to
+    # length > 3, since "led" alone still matched it after removal from
+    # IRREGULAR_PAST). Final set: 61 words.
+    for s in (
+        "In wool felt, weaving continued.",
+        "On second thought, hiring slowed.",
+        "In one fell swoop, hiring stopped.",
+        "In the LED aisle, shopping continued.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+    assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
 
 
 def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():

@@ -374,12 +374,12 @@ FINITE_AUX = frozenset(
     can could should may might must""".split()
 )
 IRREGULAR_PAST = frozenset(
-    """fell grew went took held led came became began brought built bought
-    chose drew drove felt fought gave got kept knew met paid ran said sold
-    sent sat shook sang slept spent stood struck taught told thought threw
-    understood wrote dealt swept wept sought caught swung dug rode rang sank
-    drank ate flew froze slid stole tore wore wove swore forgot forgave
-    arose awoke overcame undertook withdrew""".split()
+    """grew went took held came became began brought built bought chose drew
+    drove fought gave got kept knew met paid ran said sold sent sat shook
+    sang slept stood struck taught told threw understood wrote dealt swept
+    wept sought caught swung dug rode rang sank drank ate flew froze slid
+    tore wore wove swore forgot forgave arose awoke overcame undertook
+    withdrew""".split()
 )
 _PARTICIPIAL_TAIL_RE = re.compile(r",\s+(?:\w+ly\s+)?(\w+ing)\b(?!-)", re.I)
 # En dash terminates a clause only when whitespace follows it, so a numeric
@@ -417,7 +417,14 @@ def clause_text(sentence: str, start: int, head_end: int) -> str:
 
 
 def _has_finite_verb(toks: list[str]) -> bool:
-    return any(t in FINITE_AUX or t in IRREGULAR_PAST or t.endswith("ed") for t in toks)
+    # A 3-letter "-ed" word is never a genuine regular past tense (that would
+    # need an impossible 1-letter base verb) -- it's a homograph like the
+    # lowercased acronym "LED" coinciding with "led", the irregular past of
+    # "lead" (review A12). Length > 3 excludes those without excluding any
+    # real regular past tense, which needs at least a 2-letter base ("used").
+    return any(
+        t in FINITE_AUX or t in IRREGULAR_PAST or (len(t) > 3 and t.endswith("ed")) for t in toks
+    )
 
 
 _SEGMENT_SPLIT_RE = re.compile(r",\s+")

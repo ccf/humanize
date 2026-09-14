@@ -273,7 +273,9 @@ def repeated_phrases(sentences: list[str]) -> list[dict]:
     where: dict = defaultdict(set)
     for si, s in enumerate(sentences):
         toks = [w.lower() for w in words(s)]
-        for n in range(4, len(toks) + 1):
+        # sentences are short; the cap bounds the O(L^3) work when split_sentences
+        # finds no boundary (e.g. a bullet list with no terminal punctuation).
+        for n in range(4, min(len(toks), 60) + 1):
             for i in range(len(toks) - n + 1):
                 g = tuple(toks[i : i + n])
                 counts[g] += 1
@@ -323,14 +325,26 @@ ING_STOPLIST = frozenset(
 )
 PREP_SUB = frozenset(
     """in on at by after before during since for with from under over within
-    when while if although as once until""".split()
+    when while if although as once until despite according given unlike
+    regardless besides except beyond throughout across""".split()
+)
+SUBORDINATORS = frozenset(
+    """although because while when if once since after before until
+    unless though whereas as whenever wherever""".split()
+)
+CONJ_ADVERBS = frozenset(
+    """however instead first second third finally meanwhile yesterday
+    today tomorrow still then thus hence moreover furthermore nevertheless
+    nonetheless otherwise similarly likewise consequently indeed also
+    additionally overall ultimately importantly notably unfortunately
+    fortunately""".split()
 )
 FINITE_AUX = frozenset(
     """is are was were be been has have had do does did will would
     can could should may might must""".split()
 )
 _PARTICIPIAL_TAIL_RE = re.compile(r",\s+(?:\w+ly\s+)?(\w+ing)\b", re.I)
-_CLAUSE_END_RE = re.compile(r"[,;:—.!?]")
+_CLAUSE_END_RE = re.compile(r"[,;:—–.!?]")
 _LIST_CONTINUATION_RE = re.compile(r"^(?:,|and\b|or\b)", re.I)
 _LIST_ITEM_TAIL_RE = re.compile(r"^\s+\w+,\s*(?:and|or)\b", re.I)
 CONTAINER_HEADS = (
@@ -364,11 +378,15 @@ def clause_text(sentence: str, start: int, head_end: int) -> str:
 
 def _is_fronted_adverbial(prefix: str) -> bool:
     toks = [w.lower() for w in words(prefix)]
-    return (
-        bool(toks)
-        and toks[0] in PREP_SUB
-        and not any(t in FINITE_AUX or t.endswith("ed") for t in toks)
-    )
+    if not toks:
+        return False
+    if toks[0] in SUBORDINATORS:
+        # The comma closes a subordinate clause, so the -ing word is the main
+        # clause's subject, never a tail. The -ed / FINITE_AUX veto does not apply.
+        return True
+    if len(toks) <= 2 and toks[0] in CONJ_ADVERBS:
+        return True
+    return toks[0] in PREP_SUB and not any(t in FINITE_AUX or t.endswith("ed") for t in toks)
 
 
 def participial_tails(sentences: list[str]) -> list[dict]:
@@ -445,7 +463,12 @@ def nominalization_block(sentences: list[str]) -> dict:
             if len(stem) < 7 or not _NOMINAL_SUFFIX_RE.search(stem) or stem in NOMINAL_STOPLIST:
                 continue
             counts[low] += 1
-            if 0 < i < len(ws) - 1 and ws[i - 1].lower() == "the" and ws[i + 1].lower() == "of":
+            if (
+                0 < i < len(ws) - 1
+                and ws[i - 1].lower() == "the"
+                and ws[i + 1].lower() == "of"
+                and re.search(r"\bthe\s+" + re.escape(low) + r"\s+of\b", s, re.I)
+            ):
                 frames.append({"text": f"the {low} of", "sentence": si})
     return {
         "count": sum(counts.values()),
@@ -660,14 +683,14 @@ def dialogue_ratio(paragraphs: list[str]) -> float:
 
 
 def _first_hit(hits: list[dict]) -> str:
-    return " " + json.dumps(hits[0]["text"]) if hits else ""
+    return " " + json.dumps(hits[0]["text"], ensure_ascii=False) if hits else ""
 
 
 def _repetition_line(rep: dict) -> str:
     if rep["too_short"]:
         return "repetition: not measured (under 150 words)"
     top = rep["phrases"][0] if rep["phrases"] else None
-    shown = f" · {json.dumps(top['text'])}×{top['count']}" if top else ""
+    shown = f" · {json.dumps(top['text'], ensure_ascii=False)}×{top['count']}" if top else ""
     return (
         f"repetition: {rep['repeated_phrase_rate']}/1k · "
         f"longest repeat {rep['longest_repeat']}{shown}"
@@ -679,7 +702,9 @@ def summarize(r: dict) -> str:
     top = ", ".join(f"{h['term']}×{h['count']}" for h in r["wordlist"]["hits"][:8]) or "none"
     nom = r["nominalization"]
     nom_hits = ", ".join(f"{h['text']}×{h['count']}" for h in nom["hits"][:3]) or "none"
-    nom_frames = ", ".join(json.dumps(f["text"]) for f in nom["of_frames"][:2]) or "none"
+    nom_frames = (
+        ", ".join(json.dumps(f["text"], ensure_ascii=False) for f in nom["of_frames"][:2]) or "none"
+    )
     tail = r["grammar"]["participial_tail"]
     cont = r["grammar"]["container_of"]
     punct_line = " · ".join(
@@ -783,7 +808,7 @@ def main(argv: list[str] | None = None) -> None:
     else:
         text = sys.stdin.read()
     result = analyze(text)
-    print(summarize(result) if args.text else json.dumps(result, indent=2))
+    print(summarize(result) if args.text else json.dumps(result, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":

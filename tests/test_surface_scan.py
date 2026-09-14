@@ -535,6 +535,20 @@ def test_repetition_block_rate_and_too_short():
     }
 
 
+def test_repeated_phrases_ngram_cap_bounds_a_boundary_less_run_on_sentence():
+    # A 60-item bullet list with no terminal punctuation scans as one 480-word
+    # "sentence"; without a cap this is O(L^3) and multi-second (review issue 2).
+    import time
+
+    phrase = "workstream update for the team status report today"
+    run_on_sentence = ", ".join([phrase] * 50) + "."  # one sentence, 400 words
+    start = time.perf_counter()
+    r = ss.analyze(run_on_sentence)
+    elapsed = time.perf_counter() - start
+    assert elapsed < 1.0
+    assert r["repetition"]["longest_repeat"] <= 60
+
+
 def test_participial_tail_hits_canonical_forms_and_extracts_clause():
     s = ["We shipped the release, ensuring alignment across teams before the freeze."]
     hits = ss.participial_tails(s)
@@ -559,8 +573,35 @@ def test_participial_tail_exclusions():
         ss.participial_tails(["Readers include PhD candidates, working parents, or immigrants."])
         == []
     )
+    # "after" is a subordinator: the comma closes its clause, so "ensuring" heads
+    # the main clause's gerund subject, not a participial tail (review issue 3).
     assert (
-        ss.participial_tails(["After the release shipped, ensuring alignment took a week."]) != []
+        ss.participial_tails(["After the release shipped, ensuring alignment took a week."]) == []
+    )
+
+
+def test_participial_tail_fronted_adverbial_openers_do_not_fire():
+    # Review issue 3 / T3a / T3c: subordinator-led prefixes skip unconditionally,
+    # conjunctive-adverb openers skip, and PREP_SUB gains the missing prepositions.
+    for s in (
+        "However, shipping continued.",
+        "Yesterday, shipping continued.",
+        "Instead, running the numbers again helped.",
+        "First, gathering the data matters.",
+        "Despite the delay, shipping continued.",
+        "According to the report, spending fell.",
+        "Because the vendor slipped, shipping the release took longer.",
+        "Once the audit closed, filing became routine.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+
+
+def test_participial_tail_still_fires_past_a_fronted_opener():
+    assert ss.participial_tails(["Costs rose, driving the decision."]) != []
+    assert ss.participial_tails(["The team shipped on Friday, closing the quarter strong."]) != []
+    # The subordinator only exempts the first comma; the second comma's tail still fires.
+    assert (
+        ss.participial_tails(["Although costs rose, the team shipped, closing the quarter."]) != []
     )
 
 
@@ -568,6 +609,13 @@ def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():
     s = ["We shipped, ensuring " + " ".join(["alignment"] * 12) + " more."]
     text = ss.participial_tails(s)[0]["text"]
     assert len(text) <= 60 and not text.endswith("alignmen")
+
+
+def test_participial_tail_clause_text_stops_at_en_dash_like_em_dash():
+    # Review issue 13: en dash added to _CLAUSE_END_RE alongside em dash.
+    em = ss.participial_tails(["We shipped the release, ensuring alignment — then rested."])
+    en = ss.participial_tails(["We shipped the release, ensuring alignment – then rested."])
+    assert em[0]["text"] == en[0]["text"] == ", ensuring alignment"
 
 
 def test_container_phrases():
@@ -617,6 +665,17 @@ def test_nominalization_hits_and_frames():
     assert not ({"sentences", "instances", "appliances", "position", "question", "session"} & texts)
     assert n["of_frames"] == [{"text": "the implementation of", "sentence": 0}]
     assert set(n["hits"][0]) == {"text", "count"}
+
+
+def test_of_frames_requires_literal_adjacency_in_the_raw_sentence():
+    # Review issue 4: token-level adjacency crosses punctuation and fabricates a
+    # frame that is not literally in the text ("implementation, of course,").
+    no_frame = ss.nominalization_block(ss.split_sentences("The implementation, of course, worked."))
+    assert no_frame["of_frames"] == []
+    has_frame = ss.nominalization_block(
+        ss.split_sentences("The implementation of the plan worked.")
+    )
+    assert has_frame["of_frames"] == [{"text": "the implementation of", "sentence": 0}]
 
 
 def test_disclaimer_opener_fires_only_from_first_paragraph():
@@ -676,3 +735,15 @@ def test_summarize_has_twelve_lines_and_new_sections():
     assert lines[11].startswith("nominalization hits: ")
     assert "not measured (under 150 words)" in ss.summarize(ss.analyze("Short text. " * 5))
     assert "  ·" not in ss.summarize(ss.analyze("Short text. " * 5))
+
+
+def test_summarize_preserves_curly_quotes_in_participial_tail_hits_without_u_escapes():
+    # Review issue 1 (Critical): json.dumps defaults to ensure_ascii=True, which
+    # mangles curly quotes into \uXXXX escapes in a table SKILL.md tells the
+    # model to quote verbatim. (A curly apostrophe between word characters is
+    # normalized to ASCII by design before analysis, so it can't probe this.)
+    left_dq, right_dq = chr(0x201C), chr(0x201D)
+    text = f"We rewrote the guide, quoting {left_dq}you{right_dq} directly for clarity."
+    s = ss.summarize(ss.analyze(text))
+    assert f"{left_dq}you{right_dq}" in s
+    assert "\\u201c" not in s and "\\u201d" not in s

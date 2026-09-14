@@ -13,7 +13,7 @@
     {
       "name": "humanize",
       "description": "Audit prose for AI tells and rewrite it to read as natural human writing, grounded in StoryScope's measured human-vs-AI feature gaps",
-      "source": "./plugins/humanize",
+      "source": "./",
       "version": "0.2.0",
       "author": { "name": "ccf" },
       "license": "MIT",

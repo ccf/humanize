@@ -100,23 +100,22 @@ Rewrite (excerpt):
 ## What's inside
 
 ```
-plugins/humanize/
-  skills/humanize/
-    SKILL.md                     the procedure
-    references/
-      principles.md
-      surface-tells.md           vocabulary, punctuation, shape, discourse moves
-      style-tells.md             20 StoryScope style features with base rates
-      narrative-tells.md         57 StoryScope narrative features (fiction only)
-      model-fingerprints.md      Claude / GPT / Gemini / DeepSeek / Kimi tendencies
-      SOURCES.md                 citation registry (not loaded at runtime)
-    scripts/surface_scan.py      stdlib-only metrics: burstiness and sentence tails, punctuation,
-                                 tricolons, not-but, wordlists, closers, repeated phrases,
-                                 participial tails, container nouns, nominalization hits,
-                                 disclaimer opener
-data/                            StoryScope taxonomy + computed feature gaps
-tools/gen_tell_scaffold.py       regenerate reference scaffolds from the data
-tests/                           pytest; no network, no LLM calls
+skills/humanize/
+  SKILL.md                     the procedure
+  references/
+    principles.md
+    surface-tells.md           vocabulary, punctuation, shape, discourse moves
+    style-tells.md             20 StoryScope style features with base rates
+    narrative-tells.md         57 StoryScope narrative features (fiction only)
+    model-fingerprints.md      Claude / GPT / Gemini / DeepSeek / Kimi tendencies
+    SOURCES.md                 citation registry (not loaded at runtime)
+  scripts/surface_scan.py      stdlib-only metrics: burstiness and sentence tails, punctuation,
+                               tricolons, not-but, wordlists, closers, repeated phrases,
+                               participial tails, container nouns, nominalization hits,
+                               disclaimer opener
+data/                          StoryScope taxonomy + computed feature gaps
+tools/gen_tell_scaffold.py     regenerate reference scaffolds from the data
+tests/                         pytest; no network, no LLM calls
 ```
 
 ## Development
@@ -125,7 +124,7 @@ tests/                           pytest; no network, no LLM calls
 uv sync
 uv run pytest -q
 claude plugin validate .
-uv run python plugins/humanize/skills/humanize/scripts/surface_scan.py --text some.txt
+uv run python skills/humanize/scripts/surface_scan.py --text some.txt
 ```
 
 CI (`.github/workflows/ci.yml`) runs the same pre-commit hooks, pytest on

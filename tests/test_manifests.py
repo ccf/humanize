@@ -35,12 +35,12 @@ def test_marketplace_points_at_existing_plugin_components():
 
 def test_plugin_manifest_matches_marketplace_entry():
     m = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())["plugins"][0]
-    p = json.loads((ROOT / "plugins/humanize/.claude-plugin/plugin.json").read_text())
+    p = json.loads((ROOT / ".claude-plugin/plugin.json").read_text())
     assert p["name"] == m["name"] == "humanize"
     assert p["version"] == m["version"]
 
 
-SKILL_MD = ROOT / "plugins/humanize/skills/humanize/SKILL.md"
+SKILL_MD = ROOT / "skills/humanize/SKILL.md"
 
 
 def test_skill_line_budget():
@@ -50,7 +50,7 @@ def test_skill_line_budget():
     assert len(lines) <= 150, len(lines)
 
 
-REFS = ROOT / "plugins/humanize/skills/humanize/references"
+REFS = ROOT / "skills/humanize/references"
 KEY_RE = re.compile(r"\[([a-z-]+-\d{4})\]")
 EXPECTED_KEYS = {
     "storyscope-2026",

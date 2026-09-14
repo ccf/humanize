@@ -21,8 +21,8 @@ Rule of thumb: human drafts usually < 3/1k; AI drafts commonly 10–30/1k in
 long-form prose and can exceed 60/1k in short business emails, where
 boilerplate dominates.
 Vintage: calibrated on 2023–2024 model output. A wordlist decays — Kobak et
-al. 2025 [kobak-2025] tracked one marker's excess falling roughly fivefold
-within a year (share of biomedical abstracts containing the word, not a per-1k
+al. 2025 [kobak-2025] show marker words rising and falling with model
+generations (share of biomedical abstracts containing the word, not a per-1k
 rate; not comparable to the rule of thumb above). Re-check against current
 models before firing hard.
 Why it reads as AI: these words are over-represented in RLHF-era model output

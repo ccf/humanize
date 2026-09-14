@@ -14,10 +14,10 @@ it. Design spec: `docs/design/2026-09-13-humanize-plugin-design.md` and
 - A `Base rate:` line in `plugins/humanize/skills/humanize/references/*.md`
   must trace to a row in `data/storyscope_feature_gaps.csv` (or a future CSV
   documented in `data/README.md`; none added in v0.2). If a PR changes a
-  number, check the CSV row. Any other number must sit on a `Scan:` or `Rule
-  of thumb:` line carrying an inline `[author-year]` key that resolves in
-  `references/SOURCES.md` (`tests/test_manifests.py` enforces this); flag a
-  human/AI rate sourced from a model-vs-model comparison.
+  number, check the CSV row. Any other number must sit on a `Scan:`, `Rule
+  of thumb:`, or `Vintage:` line carrying an inline `[author-year]` key that
+  resolves in `references/SOURCES.md` (`tests/test_manifests.py` enforces
+  this); flag a human/AI rate sourced from a model-vs-model comparison.
 - Reference-doc entries use the exact five-line shape: `### name` /
   `Looks like:` / `Base rate:` (or `Scan:`) / `Why it reads as AI:` /
   `Fix: <removal | addition | rebalance> — …`, plus a sixth `Outside fiction:`

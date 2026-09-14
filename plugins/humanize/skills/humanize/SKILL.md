@@ -126,7 +126,7 @@ In priority order:
    the author plausibly would.
 4. Do not strip passives by reflex: GPT-4o (2024-era) used the agentless
    passive at about half the human rate (Reinhart et al. 2025). Recast one
-   only when a fired tell names it.
+   only when the inferred voice or a fired tell calls for it.
 5. Make `addition`-tagged fixes only when the inferred voice would plausibly do
    that, and list them under "Choices you may want to reverse".
 6. Match the inferred voice. Terse stays terse.
@@ -135,11 +135,11 @@ In priority order:
 
 Re-run the scanner on the rewrite. Show a before/after line for each metric
 that changed materially. Verify by the scan and quoted spans, not by whether
-it reads human to you. If the rewrite removed every long sentence or narrowed
-the vocabulary, say so and reread: converging is a failure even as tell counts
-fall. Confirm no fact was dropped by re-reading both. Never describe the
-result as undetectable, as passing a detector, or as certified human. It is
-better writing; say that.
+it reads human to you. If the rewrite removed every long sentence
+(`sentence_len.max` fell hard) or flattened the burstiness (`cv` fell), say so
+and reread: converging is a failure even as tell counts fall. Confirm no fact
+was dropped by re-reading both. Never describe the result as undetectable, as
+passing a detector, or as certified human. It is better writing; say that.
 
 ## Output shape (audit mode)
 

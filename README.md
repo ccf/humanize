@@ -112,7 +112,8 @@ plugins/humanize/
       SOURCES.md                 citation registry (not loaded at runtime)
     scripts/surface_scan.py      stdlib-only metrics: burstiness and sentence tails, punctuation,
                                  tricolons, not-but, wordlists, closers, repeated phrases,
-                                 participial tails, container nouns, nominalization hits
+                                 participial tails, container nouns, nominalization hits,
+                                 disclaimer opener
 data/                            StoryScope taxonomy + computed feature gaps
 tools/gen_tell_scaffold.py       regenerate reference scaffolds from the data
 tests/                           pytest; no network, no LLM calls

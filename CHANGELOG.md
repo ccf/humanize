@@ -9,7 +9,8 @@ All notable changes to this project are documented here. The format follows
 ## [0.2.0] - 2026-09-14
 
 ### Added
-- Repetition block: verbatim phrase and whole-sentence repeat detection.
+- Repetition block: verbatim phrase and whole-sentence repeat detection,
+  capped at a 60-token phrase length.
 - Grammar block: participial-tail and container-noun detection; nominalization
   hits.
 - Disclaimer-opener detection and sentence-tail keys in the scan output.
@@ -18,11 +19,15 @@ All notable changes to this project are documented here. The format follows
 - `references/SOURCES.md`, the citation registry for non-StoryScope numbers.
 - Report fixtures with sensitivity, specificity, direction, and pinned
   fairness gates.
+- `SKILL.md` line-budget test.
 
 ### Changed
 - `SKILL.md`: register gate, passive guard, and convergence check.
-- Provenance invariant now allows cited non-StoryScope numbers on `Scan:`
-  lines.
+- Provenance invariant now allows cited non-StoryScope numbers on `Scan:`,
+  `Rule of thumb:`, and `Vintage:` lines.
+- Apostrophe normalization changes `words`, `wordlist.rate`, and every per-1k
+  rate on text containing look-alike apostrophe glyphs (they now tokenize as
+  one word).
 
 ### Fixed
 - Apostrophe look-alike glyphs between letters.

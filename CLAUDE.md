@@ -7,7 +7,7 @@ StoryScope (arXiv 2604.03136). Spec and plan: `docs/design/`. Changelog: `CHANGE
 
 ```
 uv sync                                   # first time
-uv run pytest -q                          # 85 tests, must be warning-free
+uv run pytest -q                          # 92 tests, must be warning-free
 uv run ruff format <files> && uv run ruff check --fix <files>
 claude plugin validate --strict .
 uv run python plugins/humanize/skills/humanize/scripts/surface_scan.py --text <file>
@@ -26,10 +26,11 @@ Never run bare `ruff format .` — ruff 0.16 formats Python fences inside
   Use heredocs for `python -c` probes — inline quoting mangles them.
 - A `Base rate:` line traces to a row in `data/storyscope_feature_gaps.csv`
   (or a future CSV documented in `data/README.md`; none added in v0.2). Any
-  other number in `references/*.md` sits on a `Scan:` or `Rule of thumb:` line
-  with an inline `[author-year]` key that resolves in `references/SOURCES.md`
-  (`tests/test_manifests.py` enforces it); model-vs-model sources never appear
-  as a human/AI rate. Do not type numbers from memory.
+  other number in `references/*.md` sits on a `Scan:`, `Rule of thumb:`, or
+  `Vintage:` line with an inline `[author-year]` key that resolves in
+  `references/SOURCES.md` (`tests/test_manifests.py` enforces it);
+  model-vs-model sources never appear as a human/AI rate. Do not type numbers
+  from memory.
 - Reference entries are exactly: `### name` / `Looks like:` / `Base rate:` (or
   `Scan:`) / `Why it reads as AI:` / `Fix: <removal | addition | rebalance> — …`;
   `style-tells.md` adds `Outside fiction:`. Fix tag follows direction: `removal`

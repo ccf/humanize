@@ -4,17 +4,17 @@ An agent skill that audits prose for the tells of AI writing and rewrites them
 out, without flattening the author's voice. Runs in Claude Code, Codex, Cursor,
 Hermes Agent, Claude Desktop.
 
-The reference entries rest on thirteen studies. StoryScope (2026) measured 304
-narrative and stylistic features over 61,575 stories, and its widest human-vs-AI
-gaps supply the base rates. Reinhart et al. (2025) put participial modifiers at
-5.3 times the human rate and nominalization at 2.1 times. Jakesch et al. (2023)
-found repeated phrasing the strongest true signal of a text's source. Herbold et
-al. (2023) recorded a lexical-diversity reversal between model generations, a
-reminder that findings expire. humanize turns that work into an audit checklist
-plus a dependency-free scanner for the counts a model cannot eyeball; every flag
-quotes the line it came from. One pattern organizes the whole checklist: AI
-converges on shared defaults while human writing disperses. Every cited number
-resolves in `references/SOURCES.md`.
+The reference entries rest on thirteen studies. The base rates come from the
+widest human-vs-AI gaps in StoryScope (2026), which measured 304 narrative and
+stylistic features over 61,575 stories. Reinhart et al. (2025) put participial
+modifiers at 5.3 times the human rate and nominalization at 2.1 times. Repeated
+phrasing turned out to be the strongest true signal of a text's source (Jakesch
+et al. 2023). Findings also expire: Herbold et al. (2023) saw lexical diversity
+reverse between model generations. humanize turns that work into an audit
+checklist plus a dependency-free scanner for the counts a model cannot eyeball.
+Every flag quotes the line it came from. One pattern organizes the whole
+checklist: AI converges on shared defaults while human writing disperses. Every
+cited number resolves in `references/SOURCES.md`.
 
 ## Install
 
@@ -36,23 +36,23 @@ recorded in `docs/acceptance/`.
 Notes:
 
 - **Codex** reads `<repo>/.agents/skills/` and `~/.agents/skills/` but not `.claude/skills/`, and
-  caps the injected skills catalog at 2% of the context window; a long catalog drops skills.
+  caps the injected skills catalog at 2% of the context window. A long catalog drops skills.
 - **Cursor** syncs only `~/.cursor/skills/` to Cloud Agents, and only with **Sync Skills for Cloud
   Agents** on (Settings → Agents). The Cursor marketplace is reviewed by hand and has no CLI.
 - **Hermes** scans installed scripts (`surface_scan.py` is standard-library and passes) and runs
   the scanner on the host, so on a remote terminal backend (docker, modal, ssh) the scan step is
   skipped and the audit proceeds from reading alone. `hermes plugins install` also works on
-  recent builds but installs the package disabled and read-only; prefer `hermes skills install`.
+  recent builds but installs the package disabled and read-only. Prefer `hermes skills install`.
   Installing from a raw `SKILL.md` URL fetches one file and is not supported.
 - **Claude Desktop** picks up a plugin update only when `version` changes, and it needs a
   restart after installing or updating a plugin: until then the `/` menu can list a skill the
   app cannot yet invoke ("Unknown command: /humanize:humanize"). The zip is only for claude.ai
-  without the Desktop app. In claude.ai chat the skill triggers by description; picking it from
+  without the Desktop app. In claude.ai chat the skill triggers by description. Picking it from
   the `/` menu passes no arguments.
-- **Word, PDF, PowerPoint inputs.** humanize delegates extraction to the harness's document
+- **Word, PDF, PowerPoint inputs.** humanize leaves extraction to the harness's document
   skills. In Claude Code that is Anthropic's `document-skills` plugin (`/plugin marketplace add
   anthropics/skills`, `/plugin install document-skills@anthropic-agent-skills`; its `docx` read
-  path uses `pandoc` — `brew install pandoc` on macOS); Claude Desktop ships the same skills.
+  path uses `pandoc` — `brew install pandoc` on macOS). Claude Desktop ships the same skills.
 
 ## Use
 
@@ -113,7 +113,7 @@ Rewrite (excerpt):
 - **Numbers are evidence, not verdicts.** This is a writing tool. It never
   claims text is undetectable or "certified human".
 - **Register and proficiency are not tells.** Formal, plain-language,
-  technical, and second-language prose share the measured AI profile; the
+  technical, and second-language prose share the measured AI profile. The
   plugin measures it and never infers authorship from it.
 
 ## What's inside
@@ -152,12 +152,3 @@ Python 3.9 and 3.13, and `claude plugin validate --strict` on every pull request
 `tests/fixtures/expected_tells.md` is a manual checklist: run
 `/humanize tests/fixtures/<file> --audit-only` after editing the skill and
 compare.
-
-## Credit and license
-
-MIT. StoryScope code and data are MIT-licensed; `Base rate:` lines are
-computed from their released `storyscope_features.parquet` (see
-`data/README.md`); every other cited number carries an `[author-year]` key
-resolved in `references/SOURCES.md`. Base rates were measured on fiction and
-are used here as evidence, not verdicts. The AI fiction test fixture is from
-StoryScope's released dev split; the human fiction fixture is public domain.

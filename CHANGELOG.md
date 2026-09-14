@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- README prose passed through humanize itself (audit-then-rewrite); tables, commands, and the
+  file tree unchanged.
+- Credits section removed from the README; StoryScope attribution stays in `data/README.md`,
+  fixture provenance in `tests/fixtures/PROVENANCE.md`. `LICENSE` renamed to `LICENSE.md`.
+
 ## [0.3.1] - 2026-09-14
 
 ### Added

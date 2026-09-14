@@ -67,13 +67,12 @@ the length.
 If the text is 80 words or longer, run the scanner and keep the output:
 
 ```bash
-python3 scripts/surface_scan.py --text <path>
+python3 <skill folder>/scripts/surface_scan.py --text <path>
 ```
 
-Run it from this skill's folder (the directory holding this SKILL.md). Write
-pasted text to a temp file first. For the full JSON, drop `--text`. Under 80
-words, skip this step; the statistics are noise. The scanner strips code, links,
-URLs, and heading markers from Markdown before measuring.
+`<skill folder>` is the directory holding this SKILL.md; keep the working
+directory on the user's project so `<path>` resolves. Pasted text goes to a
+temp file first; drop `--text` for full JSON. Under 80 words, skip this step.
 
 **Non-text sources** (`.docx`, `.pdf`, `.pptx`, `.odt`, `.rtf`): the scanner reads
 plain text only. Extract first with the harness's document skills (Anthropic's
@@ -92,9 +91,10 @@ Walk every loaded tell list. For each tell you judge present, record:
 - the base rate line from the reference, or the scan number
 
 Rank by strength of evidence. Report **at most ten**. For texts under ~300
-words, quote raw counts from `punct.counts`, not per-1k rates. Quote
-`repetition.phrases` and `grammar.*.hits` verbatim. `nominalization.hits`
-never become a row. Other studies' ratios never go in the base-rate column.
+words, quote raw counts from `punct.counts`, not per-1k rates. Every scanner
+block that fired (`repetition.phrases`, each `grammar.*` with hits, the
+disclaimer opener) gets its own row quoting the hits verbatim. `nominalization`
+hits never become a row; other studies' ratios never go in the base-rate column.
 Format:
 
 ```

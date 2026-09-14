@@ -16,8 +16,13 @@ OUT="$ROOT/docs/acceptance/v0.3"
 REQUEST="Use the humanize skill on $FIXTURE. Audit only — do not rewrite."
 mkdir -p "$OUT"
 
-# Expected rows (case-insensitive regex) and two scanner numbers that must appear verbatim.
-ROWS=('trailing participial clause' 'verbatim repetition' 'container-noun phrase' 'safety disclaimer opener')
+# Expected rows (case-insensitive regex, matched by concept rather than by our own
+# reference titles) and two scanner numbers that must appear verbatim. CONTAINER_ALT is
+# derived from the scanner's own container_of hits on the fixture so a model that quotes
+# the hit text verbatim instead of the word "container" still matches.
+CONTAINER_ALT="$(python3 "$ROOT/skills/humanize/scripts/surface_scan.py" "$ROOT/$FIXTURE" \
+  | python3 -c 'import json,sys; h=json.load(sys.stdin)["grammar"]["container_of"]["hits"]; print("|".join(x["text"].lower() for x in h))')"
+ROWS=('participial' 'repetit|repeated' "container|${CONTAINER_ALT:-container}" 'disclaimer')
 SCAN="$(python3 "$ROOT/skills/humanize/scripts/surface_scan.py" --text "$ROOT/$FIXTURE")"
 NUM_TAILS="$(printf '%s\n' "$SCAN" | sed -n 's/^grammar: participial tails \([0-9]*\).*/\1/p')"
 NUM_REP="$(printf '%s\n' "$SCAN" | sed -n 's/^repetition: \([0-9.]*\)\/1k.*/\1/p')"
@@ -103,7 +108,11 @@ for line in open(src, encoding="utf-8"):
                 # is deliberately dropped here — it must land nowhere.
                 output.append(blk.get("text", ""))
     if ev.get("type") == "result" and ev.get("result"):
-        output.append(ev["result"])
+        # stream-json's final top-level "result" event often repeats the last assistant
+        # text block already collected above; only append it when it actually differs,
+        # or the final table gets duplicated in ## Output.
+        if not output or output[-1] != ev["result"]:
+            output.append(ev["result"])
 open(dst, "w", encoding="utf-8").write(
     "# Claude Code\n\n## Tool calls\n" + "\n".join(calls) +
     "\n\n## Scanner output\n" + "\n".join(scanner) +
@@ -116,6 +125,7 @@ EOF
 run_codex() {
   command -v codex >/dev/null || { echo "SKIP codex (not installed)"; return; }
   local tmp f="$OUT/codex.md"; tmp="$(mktemp -d)"
+  [ -n "$tmp" ] && [ -d "$tmp" ] || { echo "FAIL codex (mktemp failed)"; return; }
   mkdir -p "$tmp/.agents/skills" && cp -R "$ROOT/skills/humanize" "$tmp/.agents/skills/" && cp "$ROOT/$FIXTURE" "$tmp/"
   (cd "$tmp" && codex debug prompt-input "hi" 2>/dev/null | grep -qi humanize) || echo "  warning: skill not listed by codex debug prompt-input"
   (cd "$tmp" && codex exec -C "$tmp" --skip-git-repo-check --ephemeral -s read-only --json \
@@ -177,6 +187,7 @@ run_cursor() {
   command -v agent >/dev/null || { echo "SKIP cursor (agent CLI not installed)"; return; }
   agent --help 2>/dev/null | grep -qE -- '(^| )-p[ ,]|--print' || { echo "SKIP cursor (agent $(agent --version 2>/dev/null | head -1) has no headless flag)"; return; }
   local tmp f="$OUT/cursor.md" raw; tmp="$(mktemp -d)"
+  [ -n "$tmp" ] && [ -d "$tmp" ] || { echo "FAIL cursor (mktemp failed)"; return; }
   mkdir -p "$tmp/.cursor/skills" && cp -R "$ROOT/skills/humanize" "$tmp/.cursor/skills/" && cp "$ROOT/$FIXTURE" "$tmp/"
   # Deviation from the brief: the installed `agent` CLI's approvalMode is `allowlist`
   # with only Shell(ls) allowed, so a headless run cannot execute the scanner

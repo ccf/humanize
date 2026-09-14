@@ -8,6 +8,7 @@ import json
 import re
 import statistics
 import sys
+from collections import Counter, defaultdict
 
 ABBREVIATIONS = {
     "dr",
@@ -232,6 +233,65 @@ def parallel_opener_runs(sentences: list[str], min_run: int = 3) -> int:
 def opener_distinct_ratio(sentences: list[str]) -> float:
     fws = [w for w in (first_word(s) for s in sentences) if w]
     return round(len(set(fws)) / len(fws), 3) if fws else 0.0
+
+
+FUNCTION_WORDS = frozenset(
+    """a an the this that these those my your his her its our their some any each every no
+    i you he she it we they me him us them who whom whose which what
+    am is are was were be been being have has had do does did will would shall should can could
+    may might must and or but nor so yet for if then than as because while although though
+    of in on at to by with from into onto upon about over under after before between through
+    during without within not also just only very too there here when where how why""".split()
+)
+
+
+def repeated_phrases(sentences: list[str]) -> list[dict]:
+    """Maximal repeated phrases (>= 4 words, >= 2 content words) across sentences."""
+    counts: dict = Counter()
+    where: dict = defaultdict(set)
+    for si, s in enumerate(sentences):
+        toks = [w.lower() for w in words(s)]
+        for n in range(4, len(toks) + 1):
+            for i in range(len(toks) - n + 1):
+                g = tuple(toks[i : i + n])
+                counts[g] += 1
+                where[g].add(si)
+    repeated = {g: c for g, c in counts.items() if c >= 2}
+    non_maximal = set()
+    for g, c in repeated.items():
+        if len(g) > 4:
+            for sub in (g[1:], g[:-1]):
+                if repeated.get(sub) == c:
+                    non_maximal.add(sub)
+    survivors = sorted((g for g in repeated if g not in non_maximal), key=len, reverse=True)
+    kept: list = []
+    for g in survivors:
+        if any(
+            repeated[k] == repeated[g]
+            and len(k) > len(g)
+            and any(k[i : i + len(g)] == g for i in range(len(k) - len(g) + 1))
+            for k in kept
+        ):
+            continue
+        if sum(1 for w in g if w not in FUNCTION_WORDS) < 2:
+            continue
+        kept.append(g)
+    out = [{"text": " ".join(g), "count": repeated[g], "sentences": sorted(where[g])} for g in kept]
+    out.sort(key=lambda p: (-p["count"], -len(p["text"].split()), p["text"]))
+    return out
+
+
+def repetition_block(sentences: list[str], n_words: int) -> dict:
+    if n_words < 150:
+        return {"too_short": True, "repeated_phrase_rate": 0.0, "longest_repeat": 0, "phrases": []}
+    phrases = repeated_phrases(sentences)
+    extra = sum(p["count"] - 1 for p in phrases)
+    return {
+        "too_short": False,
+        "repeated_phrase_rate": per_1k(extra, n_words),
+        "longest_repeat": max((len(p["text"].split()) for p in phrases), default=0),
+        "phrases": phrases[:5],
+    }
 
 
 AI_WORDLIST = sorted(
@@ -484,6 +544,7 @@ def analyze(text: str) -> dict:
         "wordlist": {"hits": wl, "rate": _rate_of(wl, n_words)},
         "hedges": {"rate": _rate_of(phrase_hits(sents, HEDGES), n_words)},
         "intensifiers": {"rate": _rate_of(phrase_hits(sents, INTENSIFIERS), n_words)},
+        "repetition": repetition_block(sents, n_words),
     }
 
 

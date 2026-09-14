@@ -467,3 +467,69 @@ def test_analyze_treats_acute_accent_and_modifier_apostrophes_as_apostrophes():
 def test_normalize_runs_after_markdown_strip_so_backticks_are_untouched():
     text = "Use the `dict`s API. Everything between here must survive. Now `list` ends."
     assert ss.analyze(text)["words"] == 11
+
+
+def _unique_filler(n_sentences: int) -> str:
+    return " ".join(
+        f"Alpha{i} beta{i} gamma{i} delta{i} epsilon{i} zeta{i} eta{i} theta{i}."
+        for i in range(n_sentences)
+    )
+
+
+PLANTED = (
+    "Monday we aligned across all workstreams and teams early. "
+    "Later coordination across all workstreams and teams improved. "
+    "By Friday delivery across all workstreams and teams stayed steady."
+)
+
+
+def test_repeated_phrases_collapse_to_one_maximal_phrase():
+    phrases = ss.repeated_phrases(ss.split_sentences(PLANTED))
+    assert phrases == [
+        {"text": "across all workstreams and teams", "count": 3, "sentences": [0, 1, 2]}
+    ]
+
+
+def test_repeated_phrases_whole_repeated_sentence_counts_once():
+    s = (
+        "The project remains on track and the team continues to deliver "
+        "against the agreed plan for the quarter."
+    )
+    phrases = ss.repeated_phrases(ss.split_sentences(s + " " + s))
+    assert len(phrases) == 1 and phrases[0]["count"] == 2
+    assert len(phrases[0]["text"].split()) == 18
+
+
+def test_repeated_phrases_need_two_content_words():
+    text = (
+        "We met at the end of March. They spoke at the end of April. Costs fell at the end of May."
+    )
+    assert ss.repeated_phrases(ss.split_sentences(text)) == []
+
+
+def test_repeated_phrases_keep_a_more_frequent_short_phrase_inside_a_rarer_long_one():
+    text = (
+        "We ship the release notes weekly here. They ship the release notes weekly there. "
+        "Others ship the release notes on Fridays."
+    )
+    phrases = ss.repeated_phrases(ss.split_sentences(text))
+    assert {p["text"]: p["count"] for p in phrases} == {
+        "ship the release notes weekly": 2,
+        "ship the release notes": 3,
+    }
+
+
+def test_repetition_block_rate_and_too_short():
+    r = ss.analyze(_unique_filler(20) + " " + PLANTED)
+    rep = r["repetition"]
+    assert rep["too_short"] is False
+    assert rep["repeated_phrase_rate"] == ss.per_1k(2, r["words"])
+    assert rep["longest_repeat"] == 5
+    assert rep["phrases"][0]["text"] == "across all workstreams and teams"
+    short = ss.analyze("Short text. " * 10)["repetition"]
+    assert short == {
+        "too_short": True,
+        "repeated_phrase_rate": 0.0,
+        "longest_repeat": 0,
+        "phrases": [],
+    }

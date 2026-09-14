@@ -368,6 +368,20 @@ def test_summary_closer_ignores_split_signoff_lines():
     assert ss.summary_closer(paras) is True
 
 
+def test_summary_closer_keeps_short_closers_and_skips_only_signoffs():
+    body = (
+        "The migration slipped because the vendor API changed under us and the team lost two weeks."
+    )
+    assert ss.summary_closer([body, "In short, the migration slipped."]) is True
+    assert (
+        ss.summary_closer(
+            [body, "Ultimately, the vendor API and migration both slipped.", "Thanks!"]
+        )
+        is True
+    )
+    assert ss.summary_closer([body, "Thanks!", "Jordan"]) is False
+
+
 def test_dialogue_ratio():
     paras = ['"Hi," she said.', "He waved.", "“Bye.”", "Silence."]
     assert ss.dialogue_ratio(paras) == 0.5

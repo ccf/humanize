@@ -450,18 +450,22 @@ def _is_fronted_adverbial(prefix: str) -> bool:
     # bare comma, so a thousands separator like "1,200" isn't a boundary) into
     # segments. The first segment must be opener-led per A3; every later segment
     # must be opener-internal (exactly one word, e.g. "Texas", "2024", or itself
-    # preposition-led, e.g. "with 1,200 users") or the guard lifts — a multi-word,
-    # non-prepositional segment ("revenue rises", "the team grew") is a clause of
-    # its own, so the -ing word is a genuine trailing participial, not the
-    # opener's gerund subject (review issue A7, revised after regressing a
-    # present-tense finite verb the veto alone can't see).
+    # preposition-led AND verbless, e.g. "with 1,200 users") or the guard lifts —
+    # a multi-word, non-prepositional segment ("revenue rises", "the team grew"),
+    # or a preposition-led one that itself has a finite verb ("with the new
+    # vendor the team shipped faster", review issue A13), is a clause of its
+    # own, so the -ing word is a genuine trailing participial, not the opener's
+    # gerund subject (review issue A7, revised after regressing a present-tense
+    # finite verb the veto alone can't see).
     segments = _SEGMENT_SPLIT_RE.split(prefix)
     kind = _opener_kind([w.lower() for w in words(segments[0])])
     if kind is None:
         return False
     for seg in segments[1:]:
         seg_toks = [w.lower() for w in words(seg)]
-        if len(seg_toks) == 1 or (seg_toks and seg_toks[0] in PREP_SUB):
+        if len(seg_toks) == 1:
+            continue
+        if seg_toks and seg_toks[0] in PREP_SUB and not _has_finite_verb(seg_toks):
             continue
         return False
     if kind != "preposition":

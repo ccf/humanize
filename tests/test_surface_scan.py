@@ -716,6 +716,24 @@ def test_irregular_past_homographs_pruned_further_round_two_and_three():
     assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
 
 
+def test_prep_led_intermediate_segment_with_a_finite_verb_is_a_clause():
+    # Bugbot PR #6 comment 4002717678: an intermediate segment starting with a
+    # PREP_SUB word was treated as opener-internal unconditionally, so a real
+    # clause hiding behind a preposition ("with the new vendor the team shipped
+    # faster") was swallowed and a genuine trailing tail was dropped.
+    for s in (
+        "However, with the new vendor the team shipped faster, cutting the backlog.",
+        "Although costs rose, with the new vendor the team hired fast, doubling headcount.",
+    ):
+        assert ss.participial_tails([s]) != [], s
+    # A verbless preposition-led intermediate segment is still opener-internal.
+    for s in (
+        "In 2024, with 1,200 users, onboarding stalled.",
+        "In Austin, Texas, in 2024, hiring slowed.",
+    ):
+        assert ss.participial_tails([s]) == [], s
+
+
 def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():
     s = ["We shipped, ensuring " + " ".join(["alignment"] * 12) + " more."]
     text = ss.participial_tails(s)[0]["text"]

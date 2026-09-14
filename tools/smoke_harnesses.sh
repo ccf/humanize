@@ -16,21 +16,19 @@ OUT="$ROOT/docs/acceptance/v0.3"
 REQUEST="Use the humanize skill on $FIXTURE. Audit only — do not rewrite."
 mkdir -p "$OUT"
 
-# Expected rows (case-insensitive regex, matched by concept rather than by our own
-# reference titles) and two scanner numbers that must appear verbatim. CONTAINER_ALT is
-# derived from the scanner's own container_of hits on the fixture so a model that quotes
-# the hit text verbatim instead of the word "container" still matches.
-CONTAINER_ALT="$(python3 "$ROOT/skills/humanize/scripts/surface_scan.py" "$ROOT/$FIXTURE" \
-  | python3 -c 'import json,sys; h=json.load(sys.stdin)["grammar"]["container_of"]["hits"]; print("|".join(x["text"].lower() for x in h))')"
-ROWS=('participial' 'repetit|repeated' "container|${CONTAINER_ALT:-container}" 'disclaimer')
+# Two scanner numbers that must appear verbatim. Row concepts (matched against the
+# third |-separated field — the Tell cell — of each distinct table row under
+# "## Output", rather than by our own reference titles) are checked in judge()'s
+# row_check awk block below.
 SCAN="$(python3 "$ROOT/skills/humanize/scripts/surface_scan.py" --text "$ROOT/$FIXTURE")"
 NUM_TAILS="$(printf '%s\n' "$SCAN" | sed -n 's/^grammar: participial tails \([0-9]*\).*/\1/p')"
 NUM_REP="$(printf '%s\n' "$SCAN" | sed -n 's/^repetition: \([0-9.]*\)\/1k.*/\1/p')"
+[ -n "$NUM_TAILS" ] && [ -n "$NUM_REP" ] || { echo "FAIL all (scanner summary format changed; cannot derive expected numbers)"; exit 1; }
 
 # check_auth reads a transcript (or raw CLI output) on stdin and prints the first
 # line matching a known authentication-failure signature, or nothing.
 check_auth() {
-  grep -m1 -E "Authentication required|AuthError|token refresh failed|Please run 'agent login'"
+  grep -m1 -E "^(Error: )?Authentication required|^\S*AuthError|token refresh failed|Please run 'agent login'"
 }
 
 # section_* extract one H2 section's body from a transcript file, bounded by the
@@ -47,7 +45,26 @@ judge() { # judge <harness> <transcript-file> <tool-evidence-regex>
   out="$(section_output "$f")"
   scan="$(section_scanner_output "$f")"
   calls="$(section_tool_calls "$f")"
-  for r in "${ROWS[@]}"; do printf '%s\n' "$out" | grep -qiE "$r" || { echo "  missing row: $r"; ok=0; }; done
+  local row_check
+  # Match each concept against the third |-separated field (the Tell cell) of every
+  # distinct table row under ## Output, taking the first matching row per concept.
+  # Header/separator rows (" Tell ", "------") match none of the four regexes, so
+  # they need no special case. All four concepts must match, on four distinct rows.
+  row_check="$(printf '%s\n' "$out" | awk -F'|' '
+    /^\|/ {
+      n++
+      tell = tolower($3)
+      if (!l1 && tell ~ /participial/) l1 = n
+      if (!l2 && tell ~ /repetit/)     l2 = n
+      if (!l3 && tell ~ /container/)   l3 = n
+      if (!l4 && tell ~ /disclaimer/)  l4 = n
+    }
+    END {
+      if (!l1 || !l2 || !l3 || !l4) { print "missing concept row (participial/repetition/container/disclaimer)"; exit }
+      if (l1 == l2 || l1 == l3 || l1 == l4 || l2 == l3 || l2 == l4 || l3 == l4) print "concept rows not distinct"
+    }
+  ')"
+  [ -n "$row_check" ] && { echo "  $row_check"; ok=0; }
   printf '%s\n' "$out" | grep -iE '^\|' | grep -qi 'nominalization' && { echo "  nominalization row present"; ok=0; }
   printf '%s\n%s\n' "$scan" "$out" | grep -qE "participial tails[^0-9]{0,20}${NUM_TAILS}([^0-9]|$)" || { echo "  scanner count $NUM_TAILS absent"; ok=0; }
   printf '%s\n%s\n' "$scan" "$out" | grep -qF "${NUM_REP}/1k" || { echo "  scanner rate ${NUM_REP}/1k absent"; ok=0; }
@@ -58,25 +75,32 @@ judge() { # judge <harness> <transcript-file> <tool-evidence-regex>
 
 run_claude() {
   command -v claude >/dev/null || { echo "SKIP claude (not installed)"; return; }
-  local f="$OUT/claude-code.md"
+  local f="$OUT/claude-code.md" tmp raw
+  tmp="$(mktemp -d)"
+  [ -n "$tmp" ] && [ -d "$tmp" ] || { echo "FAIL claude-code (mktemp failed)"; return; }
+  raw="$tmp/claude-code.md.jsonl"
   claude plugin disable humanize@humanize >/dev/null 2>&1 || true
-  # A ^C or kill mid-run must not leave the user's installed plugin disabled.
-  trap 'claude plugin enable humanize@humanize >/dev/null 2>&1 || true' EXIT INT TERM
+  # A ^C or kill mid-run must not leave the user's installed plugin disabled or
+  # the raw-stream temp directory behind.
+  trap 'claude plugin enable humanize@humanize >/dev/null 2>&1 || true; rm -rf "$tmp"' EXIT
+  trap 'claude plugin enable humanize@humanize >/dev/null 2>&1 || true; rm -rf "$tmp"; trap - EXIT INT TERM; exit 130' INT TERM
   (cd "$ROOT" && claude -p "$REQUEST" --plugin-dir . --output-format stream-json --verbose \
-      --allowedTools "Bash,Read,Glob,Grep" > "$f.jsonl" 2>&1)
+      --allowedTools "Bash,Read,Glob,Grep" > "$raw" 2>&1)
   claude plugin enable humanize@humanize >/dev/null 2>&1 || true
   trap - EXIT INT TERM
   local auth_line
-  auth_line="$(check_auth < "$f.jsonl")"
+  auth_line="$(check_auth < "$raw")"
   if [ -n "$auth_line" ]; then
-    cp "$f.jsonl" "$f"
+    cp "$raw" "$f"
     echo "SKIP claude-code (not authenticated: $auth_line)"
+    rm -rf "$tmp"
     return
   fi
-  python3 - "$f.jsonl" "$f" <<'EOF'
+  python3 - "$raw" "$f" <<'EOF'
 import json, sys
 src, dst = sys.argv[1], sys.argv[2]
 calls, scanner, output = [], [], []
+scan_ids = set()
 for line in open(src, encoding="utf-8"):
     line = line.strip()
     if not line:
@@ -96,8 +120,19 @@ for line in open(src, encoding="utf-8"):
                 continue
             btype = blk.get("type")
             if btype == "tool_use":
-                calls.append(json.dumps(blk.get("input"), indent=2))
+                # Only the scanner invocation itself becomes tool-call/scanner-output
+                # evidence. A tool call that merely names surface_scan.py in a read
+                # (cat/grep) must not satisfy the tool-evidence rule; only genuine
+                # scanner invocations do, mirroring the Codex parser's filter.
+                serialized = json.dumps(blk.get("input"))
+                if "surface_scan.py" in serialized:
+                    calls.append(json.dumps(blk.get("input"), indent=2))
+                    tool_id = blk.get("id")
+                    if tool_id:
+                        scan_ids.add(tool_id)
             elif btype == "tool_result":
+                if blk.get("tool_use_id") not in scan_ids:
+                    continue
                 c = blk.get("content")
                 if isinstance(c, str):
                     scanner.append(c)
@@ -122,6 +157,7 @@ open(dst, "w", encoding="utf-8").write(
     "\n\n## Output\n" + "\n".join(output)
 )
 EOF
+  rm -rf "$tmp"
   judge "claude-code" "$f" 'surface_scan\.py'
 }
 
@@ -129,7 +165,10 @@ run_codex() {
   command -v codex >/dev/null || { echo "SKIP codex (not installed)"; return; }
   local tmp f="$OUT/codex.md"; tmp="$(mktemp -d)"
   [ -n "$tmp" ] && [ -d "$tmp" ] || { echo "FAIL codex (mktemp failed)"; return; }
+  trap 'rm -rf "$tmp"' EXIT
+  trap 'rm -rf "$tmp"; trap - EXIT INT TERM; exit 130' INT TERM
   mkdir -p "$tmp/.agents/skills" && cp -R "$ROOT/skills/humanize" "$tmp/.agents/skills/" && cp "$ROOT/$FIXTURE" "$tmp/"
+  find "$tmp/.agents/skills/humanize" -name __pycache__ -type d -exec rm -rf {} +
   (cd "$tmp" && codex debug prompt-input "hi" 2>/dev/null | grep -qi humanize) || echo "  warning: skill not listed by codex debug prompt-input"
   (cd "$tmp" && codex exec -C "$tmp" --skip-git-repo-check --ephemeral -s read-only --json \
       -o "$tmp/out.md" "Use the humanize skill on ai_report.txt. Audit only — do not rewrite." </dev/null > "$tmp/events.jsonl" 2>&1)
@@ -139,6 +178,7 @@ run_codex() {
     cp "$tmp/events.jsonl" "$f"
     echo "SKIP codex (not authenticated: $auth_line)"
     rm -rf "$tmp"
+    trap - EXIT INT TERM
     return
   fi
   python3 - "$tmp/events.jsonl" "$tmp/out.md" "$f" <<'EOF'
@@ -173,7 +213,11 @@ for line in open(events_path, encoding="utf-8"):
             output.append(text)
 try:
     with open(out_md_path, encoding="utf-8") as fh:
-        output.append(fh.read())
+        out_md_text = fh.read()
+    # out.md commonly repeats the last agent_message text verbatim; only append
+    # it when it actually differs, or ## Output carries the audit table twice.
+    if not output or output[-1] != out_md_text:
+        output.append(out_md_text)
 except OSError:
     pass
 open(dst, "w", encoding="utf-8").write(
@@ -184,6 +228,7 @@ open(dst, "w", encoding="utf-8").write(
 EOF
   judge "codex" "$f" 'surface_scan\.py'
   rm -rf "$tmp"
+  trap - EXIT INT TERM
 }
 
 run_cursor() {
@@ -191,12 +236,16 @@ run_cursor() {
   agent --help 2>/dev/null | grep -qE -- '(^| )-p[ ,]|--print' || { echo "SKIP cursor (agent $(agent --version 2>/dev/null | head -1) has no headless flag)"; return; }
   local tmp f="$OUT/cursor.md" raw; tmp="$(mktemp -d)"
   [ -n "$tmp" ] && [ -d "$tmp" ] || { echo "FAIL cursor (mktemp failed)"; return; }
+  trap 'rm -rf "$tmp"' EXIT
+  trap 'rm -rf "$tmp"; trap - EXIT INT TERM; exit 130' INT TERM
   mkdir -p "$tmp/.cursor/skills" && cp -R "$ROOT/skills/humanize" "$tmp/.cursor/skills/" && cp "$ROOT/$FIXTURE" "$tmp/"
+  find "$tmp/.cursor/skills/humanize" -name __pycache__ -type d -exec rm -rf {} +
   # Deviation from the brief: the installed `agent` CLI's approvalMode is `allowlist`
   # with only Shell(ls) allowed, so a headless run cannot execute the scanner
   # without --force.
   raw="$(cd "$tmp" && agent -p --force --output-format text "Use the humanize skill on ai_report.txt. Audit only — do not rewrite." 2>&1)"
   rm -rf "$tmp"
+  trap - EXIT INT TERM
   local auth_line
   auth_line="$(printf '%s\n' "$raw" | check_auth)"
   if [ -n "$auth_line" ]; then
@@ -222,6 +271,11 @@ run_hermes() {
   local dest="$HOME/.hermes/skills/writing/humanize" f="$OUT/hermes.md" raw
   [ -e "$dest" ] && { echo "SKIP hermes ($dest already exists; not touching it)"; return; }
   mkdir -p "$(dirname "$dest")" && cp -R "$ROOT/skills/humanize" "$dest"
+  # A ^C or kill mid-run must not leave this copy installed in the user's home
+  # directory — a leftover copy makes every later run print SKIP hermes forever.
+  trap 'rm -rf "$dest"' EXIT
+  trap 'rm -rf "$dest"; trap - EXIT INT TERM; exit 130' INT TERM
+  find "$dest" -name __pycache__ -type d -exec rm -rf {} +
   # $REQUEST names the fixture by a project-relative path; run from $ROOT so it resolves
   # no matter which directory this script itself is invoked from.
   if hermes --help 2>/dev/null | grep -q -- ' -z'; then
@@ -230,6 +284,7 @@ run_hermes() {
     raw="$(cd "$ROOT" && hermes chat -q "$REQUEST" -Q 2>&1)"
   fi
   rm -rf "$dest"
+  trap - EXIT INT TERM
   local auth_line
   auth_line="$(printf '%s\n' "$raw" | check_auth)"
   if [ -n "$auth_line" ]; then
@@ -252,4 +307,7 @@ run_hermes() {
 
 HARNESSES=("$@")
 [ "${#HARNESSES[@]}" -eq 0 ] && HARNESSES=(claude codex cursor hermes)
-for h in "${HARNESSES[@]}"; do "run_$h"; done
+for h in "${HARNESSES[@]}"; do
+  type "run_$h" >/dev/null 2>&1 || { echo "SKIP $h (unknown harness)"; continue; }
+  "run_$h"
+done

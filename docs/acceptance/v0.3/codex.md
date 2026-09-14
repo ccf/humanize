@@ -273,26 +273,15 @@ nominalization hits: 24 (validation×2, migration×2, implementation×1) · fram
 
 
 ## Output
-I’ll read the humanize skill and audit `ai_report.txt` without changing it.
-Audited `ai_report.txt` as **expository prose**. No changes made. These are stylistic findings, not proof of AI authorship.
+I’ll use the humanize skill to audit `ai_report.txt` and leave the file unchanged.
+Audited `ai_report.txt` as **expository prose**. File unchanged. The strongest patterns are repetition and uniform rhythm; these do not establish AI authorship.
 
 | # | Tell | Evidence | Base rate / metric |
 |---|------|----------|--------------------|
-| 1 | Verbatim repetition | “across all workstreams and teams” (×3), without an apparent rhetorical purpose. | Same five-word phrase repeated three times. |
-| 2 | Repeated participial tails | “, ensuring alignment across teams before any record reaches”; “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns”. The repeated construction makes results sound mechanically appended. | Scanner: 14 hits; 22.6 per 1,000 words. Legitimate in reports, but conspicuous at this density. |
-| 3 | Uniform sentence length | “Two departments asked for a shorter reporting cycle, and that request is under review.” Nearly every sentence has a similar medium-length cadence. | 34 sentences; range 14–27 words; coefficient of variation (CV) 0.19. Skill heuristic flags CV below 0.4 as unusually flat. |
-| 4 | Uniform paragraph length | The paragraph beginning “On the reliability side” follows the same three-sentence shape as nearly every substantive update. | All 12 paragraphs contain 2–3 sentences; paragraph CV 0.137, below the skill’s 0.3 uniformity heuristic. |
-| 5 | Disclaimer opener | “It's important to approach” and “I'm not able to” delay the substantive update. The vendor-pricing restriction may have a real purpose; the cautionary lead-in is generic. | Scanner: disclaimer opener fired, with two matching phrases. |
-| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” repeats the broad reassurance. “Stayed on plan” also needs reconciling with the reported two-week delay. | Scanner: summary closer detected. |
-| 7 | Abstract container phrases — weak signal | “a sense of” momentum; “The weight of” the decision. These make the account less concrete, but are ordinary report language at this frequency. | Scanner: 2 container-noun hits; insufficient density to treat as a strong tell. |
-Audited `ai_report.txt` as **expository prose**. No changes made. These are stylistic findings, not proof of AI authorship.
-
-| # | Tell | Evidence | Base rate / metric |
-|---|------|----------|--------------------|
-| 1 | Verbatim repetition | “across all workstreams and teams” (×3), without an apparent rhetorical purpose. | Same five-word phrase repeated three times. |
-| 2 | Repeated participial tails | “, ensuring alignment across teams before any record reaches”; “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns”. The repeated construction makes results sound mechanically appended. | Scanner: 14 hits; 22.6 per 1,000 words. Legitimate in reports, but conspicuous at this density. |
-| 3 | Uniform sentence length | “Two departments asked for a shorter reporting cycle, and that request is under review.” Nearly every sentence has a similar medium-length cadence. | 34 sentences; range 14–27 words; coefficient of variation (CV) 0.19. Skill heuristic flags CV below 0.4 as unusually flat. |
-| 4 | Uniform paragraph length | The paragraph beginning “On the reliability side” follows the same three-sentence shape as nearly every substantive update. | All 12 paragraphs contain 2–3 sentences; paragraph CV 0.137, below the skill’s 0.3 uniformity heuristic. |
-| 5 | Disclaimer opener | “It's important to approach” and “I'm not able to” delay the substantive update. The vendor-pricing restriction may have a real purpose; the cautionary lead-in is generic. | Scanner: disclaimer opener fired, with two matching phrases. |
-| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” repeats the broad reassurance. “Stayed on plan” also needs reconciling with the reported two-week delay. | Scanner: summary closer detected. |
-| 7 | Abstract container phrases — weak signal | “a sense of” momentum; “The weight of” the decision. These make the account less concrete, but are ordinary report language at this frequency. | Scanner: 2 container-noun hits; insufficient density to treat as a strong tell. |
+| 1 | Verbatim repetition | “across all workstreams and teams” (×3) adds repetitive wording without technical necessity. | 3 occurrences of the same five-word phrase |
+| 2 | Trailing participial clauses | “, ensuring alignment across teams before any record reaches”; “, allowing designers to retire eleven legacy patterns” | 14 hits; 22.6 per 1,000 words. Common in reports, but frequent here. |
+| 3 | Uniform sentence length | “Four product surfaces migrated to the new components, allowing designers to retire eleven legacy patterns.” exemplifies the steady cadence. | All 34 sentences span 14–27 words; coefficient of variation (CV) 0.19. Skill heuristic: below 0.4 is unusually uniform. |
+| 4 | Uniform paragraph length | The paragraph beginning “On the reliability side” follows the recurring three-sentence format. | All 12 paragraphs contain 2–3 sentences; CV 0.137. Skill heuristic: below 0.3 is uniform. |
+| 5 | Disclaimer opener | “It's important to approach” and “I'm not able to” delay the substantive update. The vendor-pricing restriction may be justified. | Scanner fired on 2 opening phrases. |
+| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” repeats the broad reassurance. “Stayed on plan” also needs reconciling with the reported two-week delay. | Summary-closer flag: true |
+| 7 | Abstract container phrases — weak signal | “a sense of” momentum; “The weight of” the decision. These obscure the specific improvement or burden. | 2 hits; ordinary report language at this density, so not strong evidence. |

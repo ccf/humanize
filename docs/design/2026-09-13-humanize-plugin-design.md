@@ -297,6 +297,15 @@ with the tell lists as a checklist and returns only the post. No audit table.
 - Knowledge encoding: reference docs + stdlib linter; no classifier port. (Decided.)
 - Voice: infer; ask one question only when a rewrite hinges on it. (Decided.)
 
+## Amendments after v0.1.0
+
+- Component 4 (`commands/humanize.md`) was folded into `SKILL.md` in 0.1.1: a
+  command file and a skill with the same name register as duplicate skills. The
+  skill carries `argument-hint` and the target-resolution rules; `/humanize`
+  invokes it directly.
+- The marketplace entry is `strict: true` with no component arrays;
+  `plugin.json` is authoritative (0.1.1, fixing a load failure).
+
 ## Out of scope for v1
 
 - A reviewer subagent that scores drafts independently.

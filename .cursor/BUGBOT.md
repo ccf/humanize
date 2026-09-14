@@ -18,7 +18,7 @@ it. Design spec: `docs/design/2026-09-13-humanize-plugin-design.md`.
   `Fix: <removal | addition | rebalance> — …`, plus a sixth `Outside fiction:`
   line on every entry in style-tells.md.
 - `SKILL.md` body stays under ~150 lines.
-- The skill, command, and README never claim output is "undetectable", passes
+- The skill and README never claim output is "undetectable", passes
   a detector, or is "certified human".
 
 ## Where bugs hide

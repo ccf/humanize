@@ -635,3 +635,44 @@ def test_analyze_exposes_nominalization_and_disclaimer():
     assert r["discourse"]["disclaimer_opener"]["fired"] is True
     assert r["discourse"]["summary_closer"] is False
     assert r["nominalization"]["of_frames"][0]["text"] == "the implementation of"
+
+
+def test_sentence_len_extras():
+    assert ss.sentence_len_extras([10, 12, 9, 30, 31, 40]) == {
+        "pct_over_30": 33.3,
+        "p90": 40,
+        "longest_flat_run": 3,
+    }
+    assert ss.sentence_len_extras([7]) == {"pct_over_30": 0.0, "p90": 7, "longest_flat_run": 1}
+    assert ss.sentence_len_extras([]) == {"pct_over_30": 0.0, "p90": 0, "longest_flat_run": 0}
+    # a monotone ramp is measured against the run's first sentence, not its neighbour
+    assert ss.sentence_len_extras([10, 13, 16, 19])["longest_flat_run"] == 2
+
+
+def test_analyze_sentence_len_keeps_stats_and_adds_extras():
+    r = ss.analyze("One two three. Four five.\n\nSix seven eight nine ten eleven.")
+    assert set(r["sentence_len"]) == {
+        "mean",
+        "stdev",
+        "cv",
+        "min",
+        "max",
+        "pct_over_30",
+        "p90",
+        "longest_flat_run",
+    }
+    assert set(r["paragraph_len"]) == {"mean", "stdev", "cv", "min", "max"}
+    assert r["sentence_len"]["p90"] == 6
+
+
+def test_summarize_has_twelve_lines_and_new_sections():
+    r = ss.analyze("We shipped the release, ensuring alignment. " * 4 + "Short text. " * 40)
+    lines = ss.summarize(r).splitlines()
+    assert len(lines) == 12
+    assert lines[8].startswith("repetition: ") and lines[9].startswith(
+        "grammar: participial tails "
+    )
+    assert lines[10].startswith("sentence tail: over-30 ")
+    assert lines[11].startswith("nominalization hits: ")
+    assert "not measured (under 150 words)" in ss.summarize(ss.analyze("Short text. " * 5))
+    assert "  ·" not in ss.summarize(ss.analyze("Short text. " * 5))

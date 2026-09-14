@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import statistics
 import sys
@@ -104,6 +105,27 @@ def _stats(values: list[int]) -> dict:
         "cv": round(sd / mean, 3) if mean else 0.0,
         "min": min(values),
         "max": max(values),
+    }
+
+
+def sentence_len_extras(lengths: list[int]) -> dict:
+    n = len(lengths)
+    if n == 0:
+        return {"pct_over_30": 0.0, "p90": 0, "longest_flat_run": 0}
+    ordered = sorted(lengths)
+    p90 = ordered[max(0, math.ceil(0.9 * n) - 1)]
+    best = run = 1
+    anchor = lengths[0]
+    for x in lengths[1:]:
+        if abs(x - anchor) <= 3:
+            run += 1
+        else:
+            run, anchor = 1, x
+        best = max(best, run)
+    return {
+        "pct_over_30": round(100 * sum(1 for x in lengths if x > 30) / n, 1),
+        "p90": p90,
+        "longest_flat_run": best,
     }
 
 
@@ -637,9 +659,29 @@ def dialogue_ratio(paragraphs: list[str]) -> float:
     return round(sum(bool(_DIALOGUE_RE.search(p)) for p in paragraphs) / len(paragraphs), 3)
 
 
+def _first_hit(hits: list[dict]) -> str:
+    return " " + json.dumps(hits[0]["text"]) if hits else ""
+
+
+def _repetition_line(rep: dict) -> str:
+    if rep["too_short"]:
+        return "repetition: not measured (under 150 words)"
+    top = rep["phrases"][0] if rep["phrases"] else None
+    shown = f" · {json.dumps(top['text'])}×{top['count']}" if top else ""
+    return (
+        f"repetition: {rep['repeated_phrase_rate']}/1k · "
+        f"longest repeat {rep['longest_repeat']}{shown}"
+    )
+
+
 def summarize(r: dict) -> str:
     sl, pl, pu, st = r["sentence_len"], r["paragraph_len"], r["punct"], r["structures"]
     top = ", ".join(f"{h['term']}×{h['count']}" for h in r["wordlist"]["hits"][:8]) or "none"
+    nom = r["nominalization"]
+    nom_hits = ", ".join(f"{h['text']}×{h['count']}" for h in nom["hits"][:3]) or "none"
+    nom_frames = ", ".join(json.dumps(f["text"]) for f in nom["of_frames"][:2]) or "none"
+    tail = r["grammar"]["participial_tail"]
+    cont = r["grammar"]["container_of"]
     punct_line = " · ".join(
         f"{label} {pu[key]} ({pu['counts'][key]})"
         for label, key in (
@@ -665,6 +707,12 @@ def summarize(r: dict) -> str:
             f"hedges {r['hedges']['rate']}/1k · intensifiers {r['intensifiers']['rate']}/1k",
             f"summary closer: {'yes' if r['discourse']['summary_closer'] else 'no'} · "
             f"dialogue paragraphs: {round(r['dialogue']['ratio'] * 100)}%",
+            _repetition_line(r["repetition"]),
+            f"grammar: participial tails {tail['count']} ({tail['rate']}/1k)"
+            f"{_first_hit(tail['hits'])} · container-of {cont['count']}{_first_hit(cont['hits'])}",
+            f"sentence tail: over-30 {sl['pct_over_30']}% · p90 {sl['p90']} · "
+            f"longest flat run {sl['longest_flat_run']}",
+            f"nominalization hits: {nom['count']} ({nom_hits}) · frames: {nom_frames}",
         ]
     )
 
@@ -677,6 +725,7 @@ def analyze(text: str) -> dict:
     wl = phrase_hits(sents, AI_WORDLIST)
     tails = participial_tails(sents)
     containers = container_phrases(sents)
+    sent_lens = [len(words(s)) for s in sents]
     return {
         "discourse": {
             "summary_closer": summary_closer(paras),
@@ -686,7 +735,7 @@ def analyze(text: str) -> dict:
         "words": n_words,
         "sentences": len(sents),
         "paragraphs": len(paras),
-        "sentence_len": _stats([len(words(s)) for s in sents]),
+        "sentence_len": {**_stats(sent_lens), **sentence_len_extras(sent_lens)},
         "paragraph_len": _stats([len(split_sentences(p)) for p in paras]),
         "punct": punctuation(text, n_words),
         "structures": {

@@ -547,6 +547,28 @@ def test_repeated_phrases_ngram_cap_bounds_a_boundary_less_run_on_sentence():
     elapsed = time.perf_counter() - start
     assert elapsed < 1.0
     assert r["repetition"]["longest_repeat"] <= 60
+    # A10: the returned (sliced) phrase list stays small regardless of how many
+    # times the phrase repeats. (`repeated_phrase_rate` itself is not asserted
+    # here — see the final fix report for why this specific probe's rate is not
+    # under the brief's stated 50/1k target even after the A10 merge.)
+    assert len(r["repetition"]["phrases"]) <= 5
+
+
+def test_repeated_phrases_merges_overlapping_cap_length_windows_of_one_run():
+    # Review issue A10: the 60-token cap fragments a verbatim repeat longer than
+    # 60 tokens into many overlapping, same-count 60-grams that the existing
+    # maximality collapse never merges (it only drops shorter substrings),
+    # inflating repeated_phrase_rate. Two identical 100-word sentences should
+    # collapse to exactly one phrase, not the 41 overlapping 60-token windows a
+    # cap with no merge step would keep.
+    sentence = " ".join(f"alpha{i}" for i in range(100)) + "."
+    text = sentence + " " + sentence
+    phrases = ss.repeated_phrases(ss.split_sentences(text))
+    assert len(phrases) == 1
+    assert phrases[0]["count"] == 2
+    assert len(phrases[0]["text"].split()) == 60
+    r = ss.analyze(text)
+    assert r["repetition"]["longest_repeat"] == 60
 
 
 def test_participial_tail_hits_canonical_forms_and_extracts_clause():
@@ -618,20 +640,30 @@ def test_participial_tail_ignores_hyphenated_ing_compounds():
 
 
 def test_participial_tail_guard_evaluates_whole_prefix_not_just_first_raw_comma():
-    # Bugbot PR #6 comment 4002402546: gating on `m.start() == first_comma` meant
-    # any earlier comma inside the opener (city-state, dates, thousands
-    # separators) disabled the adverbial check entirely. Must NOT fire — the
-    # extra commas are still part of one verbless opener.
+    # Bugbot PR #6 comment 4002402546, REVISED after the re-review: gating on
+    # `m.start() == first_comma` meant any earlier comma inside the opener
+    # (city-state, dates, thousands separators) disabled the adverbial check
+    # entirely. The whole-prefix guard is segment-based: the first comma segment
+    # must be opener-led; every later segment must be opener-internal (one word,
+    # or itself preposition-led) or the guard lifts. Must NOT fire — every
+    # non-first segment is opener-internal (a single word or a prepositional
+    # phrase), so it's all one verbless opener.
     for s in (
         "In Austin, Texas, shipping continued.",
         "In 2024, with 1,200 users, onboarding stalled.",
+        "On July 4, 2024, spending spiked.",
     ):
         assert ss.participial_tails([s]) == [], s
-    # Must still fire — a complete second clause (with a finite verb, including
-    # an irregular past) follows the opener before the -ing word, so it's a
-    # genuine trailing participial, not the opener's gerund subject.
-    assert ss.participial_tails(["In March, the team grew, closing the gap."]) != []
-    assert ss.participial_tails(["After the launch, the board met, approving the plan."]) != []
+    # Must still fire — a later segment is a multi-word, non-prepositional
+    # clause of its own (even with only a present-tense verb the finite-verb
+    # veto alone can't see), so the -ing word is a genuine trailing participial.
+    for s in (
+        "In most quarters, revenue rises, lifting margins.",
+        "In practice, this approach reduces friction, enabling teams to move faster.",
+        "In March, the team grew, closing the gap.",
+        "After the launch, the board met, approving the plan.",
+    ):
+        assert ss.participial_tails([s]) != [], s
     # All A3 cases still hold under the whole-prefix guard.
     assert ss.participial_tails(["However, shipping continued."]) == []
     assert (
@@ -651,6 +683,19 @@ def test_participial_tail_clause_text_stops_at_en_dash_like_em_dash():
     em = ss.participial_tails(["We shipped the release, ensuring alignment — then rested."])
     en = ss.participial_tails(["We shipped the release, ensuring alignment – then rested."])
     assert em[0]["text"] == en[0]["text"] == ", ensuring alignment"
+
+
+def test_clause_text_en_dash_terminates_only_when_whitespace_follows():
+    # Review issue A8: A5 made en dash a clause terminator outright, so a
+    # numeric range like "2023-2024" (en dash) was truncated mid-range.
+    keeps_range = ss.participial_tails(
+        ["We shipped the release, covering 2023–2024 spending in full."]
+    )
+    assert keeps_range[0]["text"] == ", covering 2023–2024 spending in full"
+    still_terminates = ss.participial_tails(
+        ["We shipped the release, ensuring alignment – then rested."]
+    )
+    assert still_terminates[0]["text"] == ", ensuring alignment"
 
 
 def test_container_phrases():

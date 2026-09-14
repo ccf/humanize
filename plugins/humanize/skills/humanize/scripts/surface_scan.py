@@ -267,10 +267,37 @@ FUNCTION_WORDS = frozenset(
 )
 
 
+def _merge_capped_gram_runs(kept: list, repeated: dict, where: dict, starts: dict) -> list:
+    """Collapse a run of overlapping cap-length (60-token) grams that all came from
+    one verbatim repeat longer than the cap into a single representative gram.
+    Without this, a repeat over 60 tokens survives as many distinct, overlapping
+    60-grams (one per sliding-window position) instead of one phrase, inflating
+    repeated_phrase_rate (review issue A10)."""
+    groups: dict = defaultdict(list)
+    rest = []
+    for g in kept:
+        if len(g) == 60:
+            groups[(repeated[g], frozenset(where[g]))].append(g)
+        else:
+            rest.append(g)
+    merged = rest
+    for group in groups.values():
+        group.sort(key=lambda g: starts[g])
+        last_start = None
+        for g in group:
+            start = starts[g]
+            if last_start is not None and start - last_start < 60:
+                continue  # another window of the same run as the previous kept gram
+            merged.append(g)
+            last_start = start
+    return merged
+
+
 def repeated_phrases(sentences: list[str]) -> list[dict]:
     """Maximal repeated phrases (>= 4 words, >= 2 content words) across sentences."""
     counts: dict = Counter()
     where: dict = defaultdict(set)
+    starts: dict = {}  # cap-length (60-token) gram -> its earliest start index
     for si, s in enumerate(sentences):
         toks = [w.lower() for w in words(s)]
         # sentences are short; the cap bounds the O(L^3) work when split_sentences
@@ -280,6 +307,8 @@ def repeated_phrases(sentences: list[str]) -> list[dict]:
                 g = tuple(toks[i : i + n])
                 counts[g] += 1
                 where[g].add(si)
+                if n == 60 and g not in starts:
+                    starts[g] = i
     repeated = {g: c for g, c in counts.items() if c >= 2}
     non_maximal = set()
     for g, c in repeated.items():
@@ -300,6 +329,7 @@ def repeated_phrases(sentences: list[str]) -> list[dict]:
         if sum(1 for w in g if w not in FUNCTION_WORDS) < 2:
             continue
         kept.append(g)
+    kept = _merge_capped_gram_runs(kept, repeated, where, starts)
     out = [{"text": " ".join(g), "count": repeated[g], "sentences": sorted(where[g])} for g in kept]
     out.sort(key=lambda p: (-p["count"], -len(p["text"].split()), p["text"]))
     return out
@@ -354,7 +384,9 @@ IRREGULAR_PAST = frozenset(
     forgot forgave arose awoke overcame undertook withdrew""".split()
 )
 _PARTICIPIAL_TAIL_RE = re.compile(r",\s+(?:\w+ly\s+)?(\w+ing)\b(?!-)", re.I)
-_CLAUSE_END_RE = re.compile(r"[,;:—–.!?]")
+# En dash terminates a clause only when whitespace follows it, so a numeric
+# range like "2023–2024" is not mistaken for a clause boundary (review issue A8).
+_CLAUSE_END_RE = re.compile(r"[,;:—.!?]|–(?=\s)")
 _LIST_CONTINUATION_RE = re.compile(r"^(?:,|and\b|or\b)", re.I)
 _LIST_ITEM_TAIL_RE = re.compile(r"^\s+\w+,\s*(?:and|or)\b", re.I)
 CONTAINER_HEADS = (
@@ -390,29 +422,49 @@ def _has_finite_verb(toks: list[str]) -> bool:
     return any(t in FINITE_AUX or t in IRREGULAR_PAST or t.endswith("ed") for t in toks)
 
 
+_SEGMENT_SPLIT_RE = re.compile(r",\s+")
+
+
+def _opener_kind(toks: list[str]) -> str | None:
+    """Classify a FIRST segment's opener type per A3, or None if it isn't one."""
+    if not toks:
+        return None
+    if toks[0] in SUBORDINATORS:
+        return "subordinator"
+    if len(toks) <= 2 and toks[0] in CONJ_ADVERBS:
+        return "conj_adverb"
+    if toks[0] in PREP_SUB:
+        return "preposition"
+    return None
+
+
 def _is_fronted_adverbial(prefix: str) -> bool:
     # `prefix` runs from the sentence start to the participial match's comma and
     # may itself contain earlier commas (city-state, dates, thousands separators,
-    # coordinated adjectives, or a genuine second clause). Segment on the first of
-    # those: the opener decides whether a skip is even on the table, and whatever
-    # follows it (the "remainder") decides whether that opener's clause is all
-    # there is, or whether a complete second clause has already started — in
-    # which case the -ing word is a real trailing participial, not the opener's.
-    comma = prefix.find(",")
-    opener, remainder = (prefix[:comma], prefix[comma + 1 :]) if comma != -1 else (prefix, "")
-    toks = [w.lower() for w in words(opener)]
-    if not toks:
+    # coordinated adjectives, or a genuine second clause). Split on ", " (not a
+    # bare comma, so a thousands separator like "1,200" isn't a boundary) into
+    # segments. The first segment must be opener-led per A3; every later segment
+    # must be opener-internal (exactly one word, e.g. "Texas", "2024", or itself
+    # preposition-led, e.g. "with 1,200 users") or the guard lifts — a multi-word,
+    # non-prepositional segment ("revenue rises", "the team grew") is a clause of
+    # its own, so the -ing word is a genuine trailing participial, not the
+    # opener's gerund subject (review issue A7, revised after regressing a
+    # present-tense finite verb the veto alone can't see).
+    segments = _SEGMENT_SPLIT_RE.split(prefix)
+    kind = _opener_kind([w.lower() for w in words(segments[0])])
+    if kind is None:
         return False
-    is_opener = (
-        toks[0] in SUBORDINATORS  # the subordinate clause's own verb doesn't
-        # count against it — every subordinate clause has one — so no veto
-        # applies to the opener itself here.
-        or (len(toks) <= 2 and toks[0] in CONJ_ADVERBS)
-        or (toks[0] in PREP_SUB and not _has_finite_verb(toks))
-    )
-    if not is_opener:
+    for seg in segments[1:]:
+        seg_toks = [w.lower() for w in words(seg)]
+        if len(seg_toks) == 1 or (seg_toks and seg_toks[0] in PREP_SUB):
+            continue
         return False
-    return not _has_finite_verb([w.lower() for w in words(remainder)])
+    if kind != "preposition":
+        # Subordinate and conjunctive-adverb openers carry no veto: a
+        # subordinate clause always has its own verb, and that doesn't count
+        # against it (any genuine second clause was already caught above).
+        return True
+    return not _has_finite_verb([w.lower() for w in words(prefix)])
 
 
 def participial_tails(sentences: list[str]) -> list[dict]:

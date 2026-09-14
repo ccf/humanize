@@ -78,11 +78,12 @@ def test_sources_registry_exists_with_expected_keys():
     text = (REFS / "SOURCES.md").read_text()
     keys = _source_keys()
     assert EXPECTED_KEYS <= keys
-    # Split on lines that start with "## " rather than searching for the next
-    # occurrence of that literal, so an H2-shaped line inside an entry's body
-    # text can't truncate the block early.
-    blocks = re.split(r"(?m)^## ", text)[1:]
-    by_key = {block.split("`", 2)[1]: block for block in blocks}
+    # Split only on the backticked key-heading form the registry uses, not any
+    # line starting with "## " — a body line shaped like an H2, or an unrelated
+    # H2 heading, could otherwise misalign the blocks or make `by_key` raise.
+    blocks = re.split(r"(?m)^## `", text)[1:]
+    by_key = {block.split("`", 1)[0]: block for block in blocks}
+    assert keys <= set(by_key), sorted(keys - set(by_key))
     for key in keys:
         block = by_key[key]
         assert "May support:" in block and "Verified:" in block, key

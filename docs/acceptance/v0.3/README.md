@@ -15,25 +15,50 @@ skill, audit-only, against `tests/fixtures/ai_report.txt`. The script installs t
 working-tree copy of `skills/humanize` into each harness the harness's own way (a
 temp project for Codex and Cursor, `--plugin-dir .` for Claude Code, a copy into
 `~/.hermes/skills/writing/humanize` for Hermes), sends one non-interactive request,
-and captures the raw output.
+and captures the output.
+
+Every transcript has three H2 sections, in this fixed order:
+
+- `## Tool calls` — the commands or tool inputs the agent issued (for Claude Code and
+  Codex, only the actual scanner invocation; reads of `SKILL.md` never appear here).
+- `## Scanner output` — the raw output of any scanner invocation.
+- `## Output` — the agent's own final text only. For Claude Code this excludes the
+  Skill launch's injected `SKILL.md` dump (it lands in neither section). Where a
+  harness's headless mode doesn't expose tool-call/tool-result data at all (Cursor's
+  `--output-format text`, Hermes's oneshot/quiet mode), the first two sections say so
+  and the full raw response goes under `## Output`.
 
 ## PASS rule
 
-A harness is judged PASS only with evidence that both the skill and the scanner ran:
+A harness is judged PASS only with evidence that both the skill and the scanner ran.
+The judge is section-aware: each check below runs against the section named, not the
+whole transcript.
 
-- All four expected audit rows are present (case-insensitive): trailing participial
-  clause, verbatim repetition, container-noun phrase, safety disclaimer opener.
-- No nominalization row (nominalization is reported-only per spec, never a row).
+- All four expected audit rows are present in `## Output` (case-insensitive): trailing
+  participial clause, verbatim repetition, container-noun phrase, safety disclaimer
+  opener.
+- No nominalization row in `## Output` (nominalization is reported-only per spec,
+  never a row).
 - The scanner's exact participial-tails count and repetition rate (computed by the
   script from a live `surface_scan.py` run against the same fixture) appear verbatim
-  in the transcript.
-- Where the harness exposes tool-call events (Claude Code, Codex), a tool event names
-  `surface_scan.py`.
-- No rewrite section (`## Rewrite` or "Choices you may want to reverse") — the request
-  was audit-only.
+  in `## Scanner output` or `## Output`.
+- Where the harness exposes tool-call events (Claude Code, Codex), `## Tool calls`
+  has a tool event naming `surface_scan.py`.
+- No rewrite section (`## Rewrite` or "Choices you may want to reverse") anywhere in
+  `## Output` — the request was audit-only.
 
 `tools/smoke_harnesses.sh` prints one `PASS <harness>`, `FAIL <harness>`, or
 `SKIP <harness> (reason)` line per harness, with reason lines above a FAIL.
+
+## SKIP on authentication failure
+
+If a harness's raw output contains a recognized authentication-failure signature
+(`Authentication required`, `AuthError`, `token refresh failed`, or
+`Please run 'agent login'`), the script prints
+`SKIP <harness> (not authenticated: <first matching line>)` instead of running the
+judge, and still saves the raw output as that harness's transcript. The script never
+runs a login command itself — an auth failure means the user needs to sign that CLI
+in before the next run.
 
 ## CLI versions (pinned before running, 2026-09-14)
 

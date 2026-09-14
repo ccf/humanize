@@ -1,19 +1,296 @@
 # Codex
 
-## Tool events
-{"type":"item.completed","item":{"id":"item_2","type":"command_execution","command":"/bin/zsh -lc 'cat .agents/skills/humanize/SKILL.md'","aggregated_output":"---\nname: humanize\ndescription: Use when drafting or editing any prose — email, essay, documentation, blog post, story, chat reply — or when asked to \"humanize\" text, make it \"sound less like AI\", \"more natural\", \"less robotic\", or remove AI tells. Also use when reviewing prose someone else wrote. Not for code, config, or commit messages.\n---\n\n# Humanize\n\nMake prose read as natural human writing by finding and removing the tells that\nmark it as AI-generated. Grounded in thirteen studies of measured style\ndifferences: AI converges on shared defaults; human writing disperses.\n\nRead `references/principles.md` first, every time.\n\n## Two modes\n\n**Drafting mode** — you are writing the prose yourself. Before emitting, check\nit against `references/surface-tells.md` and `references/style-tells.md` (add\n`references/narrative-tells.md` for fiction). Fix what you find. Return only\nthe text. No audit table, no commentary about tells.\n\n**Audit mode** — the user asks you to humanize existing text, or `/humanize`\nwas invoked. Follow all six steps below.\n\n## Invocation (`/humanize` only)\n\nApplies only when the user typed `/humanize …` (Codex: `$humanize …`). On\nauto-invoke there are no arguments: skip this section. Options below also\nwork as plain words in a request (\"audit only\", \"this is fiction\").\n\nArguments: $ARGUMENTS\n\nTreat an empty line, or one that still reads literally as `$ARGUMENTS`, as no\narguments. Then resolve the target, in order:\n1. Strip any flags (`--audit-only`, `--fiction`, `--prose`) from the arguments.\n2. If what remains is a path to an existing file, read that file.\n3. Else if anything remains, treat it as the text itself.\n4. Else (no arguments, or flags only): use the most recent prose you produced\n   in this conversation, or the text the user most recently shared. If there is\n   none, ask what to humanize.\n\nFlags:\n- `--audit-only` — stop after step 3 (the audit table). Do not rewrite.\n- `--fiction` / `--prose` — override step 1's classification (`--prose` means\n  `expository` or `conversational`; pick whichever fits).\n\n## Audit mode\n\n### 1. Classify\n\nDecide the class from the text itself:\n- `fiction` — narrative with characters and events\n- `expository` — essay, article, documentation, report, post\n- `conversational` — email, message, chat reply, note\n\nLoad `references/principles.md`, `references/surface-tells.md`, and\n`references/style-tells.md`. Load `references/narrative-tells.md` only for\n`fiction`. Load `references/model-fingerprints.md` only if the user names the\ngenerating model or asks which model wrote it. Honor a `--fiction` / `--prose`\noverride if given.\n\nIn `expository` prose, nominalizations, container nouns, and participial\ntails are native register — prompts to look, not tells, unless extreme for\nthe length.\n\n### 2. Scan\n\nIf the text is 80 words or longer, run the scanner and keep the output:\n\n```bash\npython3 scripts/surface_scan.py --text <path>\n```\n\nRun it from this skill's folder (the directory holding this SKILL.md). Write\npasted text to a temp file first. For the full JSON, drop `--text`. Under 80\nwords, skip this step; the statistics are noise. The scanner strips code, links,\nURLs, and heading markers from Markdown before measuring.\n\n**Non-text sources** (`.docx`, `.pdf`, `.pptx`, `.odt`, `.rtf`): the scanner reads\nplain text only. Extract first with the harness's document skills (Anthropic's\n`docx`/`pdf` skills ship with Claude Code's `document-skills` plugin and with\nClaude Desktop) to write a temp `.md`, then scan and audit that. In claude.ai the\nfile is an attachment: convert it in the sandbox (pandoc, pdfplumber). Without\ndocument skills, read the file yourself if you can and write the text to a temp\nfile; otherwise ask for a text export. Deliver Markdown; a Word file via `docx`.\n\n### 3. Audit\n\nWalk every loaded tell list. For each tell you judge present, record:\n\n- the tell name\n- one quoted example from the text (add `(×N)` if it recurs)\n- the base rate line from the reference, or the scan number\n\nRank by strength of evidence. Report **at most ten**. For texts under ~300\nwords, quote raw counts from `punct.counts`, not per-1k rates. Quote\n`repetition.phrases` and `grammar.*.hits` verbatim. `nominalization.hits`\nnever become a row. Other studies' ratios never go in the base-rate column.\nFormat:\n\n```\n| # | Tell | Evidence | Base rate / metric |\n|---|------|----------|--------------------|\n| 1 | Emotion via embodied sensation | \"her chest tightened\" (×6) | AI 81% / human 39% |\n| 2 | Em-dash density | 14.1 per 1k words | rule of thumb: human 0–4 |\n```\n\nIf `--audit-only`, stop here.\n\n### 4. Infer voice\n\nState in one line the register, audience, and intent you will preserve, e.g.\n\"Direct, peer-to-peer, mildly informal; telling a manager the date will slip.\"\nAsk the user one question only if a rewrite decision hinges on something you\ncannot infer (whether the piece is meant to be funny; whether a real name may\nbe used). Otherwise do not ask.\n\n### 5. Rewrite\n\nIn priority order:\n\n1. Preserve every fact, claim, name, number, and the author's position.\n2. Fix only the tells that fired. Leave everything else as written.\n3. Introduce variance, not a new default: vary sentence and paragraph length;\n   let a plain sentence stay plain; name an emotion once instead of embodying\n   it again; stop at the climax; allow a specific real-world reference where\n   the author plausibly would.\n4. Do not strip passives by reflex: GPT-4o (2024-era) used the agentless\n   passive at about half the human rate (Reinhart et al. 2025). Recast one\n   only when the inferred voice or a fired tell calls for it.\n5. Make `addition`-tagged fixes only when the inferred voice would plausibly do\n   that, and list them under \"Choices you may want to reverse\".\n6. Match the inferred voice. Terse stays terse.\n\n### 6. Verify\n\nRe-run the scanner on the rewrite. Show a before/after line for each metric\nthat changed materially. Verify by the scan and quoted spans, not by whether\nit reads human to you. If the rewrite removed every long sentence\n(`sentence_len.max` fell hard) or flattened the burstiness (`cv` fell), say so\nand reread: converging is a failure even as tell counts fall. Confirm no fact\nwas dropped by re-reading both. Never describe the result as undetectable, as\npassing a detector, or as certified human. It is better writing; say that.\n\n## Output shape (audit mode)\n\n1. Audit table (≤10 rows)\n2. One-line voice statement\n3. The rewrite\n4. Before/after metrics (only those that changed)\n5. \"Choices you may want to reverse\" (only if any `addition` fixes were made)\n","exit_code":0,"status":"completed"}}
-{"type":"item.completed","item":{"id":"item_6","type":"command_execution","command":"/bin/zsh -lc 'cat .agents/skills/humanize/references/surface-tells.md .agents/skills/humanize/references/style-tells.md'","aggregated_output":"# Surface tells\n\nThe layer StoryScope does not measure: vocabulary, grammar, punctuation,\nsentence and paragraph shape, and discourse moves. Applies to every text\nclass. Each entry names the `surface_scan.py` metric that measures it where\none exists. Ranges marked *rule of thumb* are working heuristics from\npractice, not measured in the StoryScope corpus. Numbers that are not\nStoryScope base rates sit on `Scan:` or `Rule of thumb:` lines with a `[key]`\nthat resolves in `SOURCES.md`.\n\n## Vocabulary\n\n### AI-associated wordlist\nLooks like: \"delve\", \"tapestry\", \"a testament to\", \"navigate the complexities\",\n\"it's worth noting\", \"leverage\", \"robust\", \"seamless\", \"crucial\", \"pivotal\",\n\"foster\", \"underscore\", \"multifaceted\", \"landscape\", \"vibrant\", \"nuanced\",\n\"meticulous\", \"harness\", \"synergy\", \"holistic\", \"streamline\", \"elevate\",\n\"empower\", \"unlock\", \"resonate\", \"realm\", \"beacon\", \"unwavering\".\nScan: `wordlist.rate` per 1k words and `wordlist.hits` with sentence positions.\nRule of thumb: human drafts usually < 3/1k; AI drafts commonly 10–30/1k in\nlong-form prose and can exceed 60/1k in short business emails, where\nboilerplate dominates.\nVintage: calibrated on 2023–2024 model output. A wordlist decays — Kobak et\nal. 2025 [kobak-2025] show marker words rising and falling with model\ngenerations (share of biomedical abstracts containing the word, not a per-1k\nrate; not comparable to the rule of thumb above). Re-check against current\nmodels before firing hard.\nWhy it reads as AI: these words are over-represented in RLHF-era model output\nand under-represented in ordinary human prose of the same register; readers\nhave learned the list.\nFix: removal — replace with the plain word the author would use (\"use\" for\n\"leverage\", \"strong\" for \"robust\", \"important\" for \"crucial\") or cut the word\nentirely; most are decorative.\n\n### Latinate lean\nLooks like: \"utilize\", \"facilitate\", \"demonstrate\", \"commence\", \"implement\",\n\"ascertain\" where \"use\", \"help\", \"show\", \"start\", \"do\", \"find out\" would do.\nBase rate: AI 2.83 / human 2.51 on a 1–5 Anglo-Saxon→Latinate scale\n(StoryScope STY_ALL_016).\nWhy it reads as AI: models default to the formal register of their training\nmass; humans pick the short word unless the register demands otherwise.\nFix: rebalance — swap to the short Germanic word where the voice is not formal.\n\n### Nominalized verbs\nLooks like: \"the implementation of the policy led to an improvement in\nretention\" where \"implementing the policy improved retention\" would do; \"the\nX of\" frames stacked through a paragraph.\nScan: `nominalization.hits` and `nominalization.of_frames` — hits only, no\nrate, no threshold; singular and plural forms are separate hits (Herbold et\nal. 2023 [herbold-2023]; Reinhart et al. 2025 [reinhart-2025]).\nWhy it reads as AI: buried verbs rise monotonically across model generations,\nbut formal, legal, academic, and second-language prose nominalize legitimately\n— in `expository` text these hits are a prompt to look, never a table row.\nFix: rebalance — unbury the verb where the register does not earn the noun.\n\n### Abstract container-noun phrase\nLooks like: \"a sense of unease\", \"a mix of pride and fear\", \"the weight of the\ndecision\" — an abstract container standing in for the concrete thing.\nScan: `grammar.container_of` count and hits; the 13 heads are those attested\nin LAMP Table 8 (Chakrabarty et al. 2025 [chakrabarty-2025]), rare in the\nhuman seed paragraphs.\nWhy it reads as AI: a reflex reach for an abstraction where a human names the\nobject or the feeling; fiction uses these legitimately, so judge density.\nFix: removal — name the concrete thing, or cut the frame and keep the noun.\n\n### Hedge stacks\nLooks like: \"It could perhaps be argued that this might, to some extent,\ngenerally be the case.\"\nScan: `hedges.rate` per 1k. Rule of thumb: > 10/1k in expository prose is\na stack.\nWhy it reads as AI: models hedge to avoid being wrong; a person with a view\nstates it and hedges once, if at all.\nFix: removal — keep at most one hedge per claim; delete the rest.\n\n### Intensifier stacks\nLooks like: \"truly remarkable\", \"deeply meaningful\", \"incredibly important\",\n\"genuinely transformative\", several per paragraph.\nScan: `intensifiers.rate` per 1k. Rule of thumb: > 8/1k reads as padding.\nWhy it reads as AI: intensifiers substitute for specifics; humans intensify\nrarely and usually for effect.\nFix: removal — delete the intensifier or replace the phrase with a concrete\ndetail that earns the emphasis.\n\n## Punctuation\n\n### Em-dash density\nLooks like: \"The plan—while ambitious—was sound—and it worked.\"\nScan: `punct.em_dash` per 1k. Rule of thumb: human nonfiction 0–4/1k; AI\ndrafts often 8–20/1k. Per-1k rates need roughly 300+ words to mean anything;\nbelow that, cite the raw count (`punct.counts.em_dash`) and treat one or two\nmarks as noise. CLI flags like `--audit-only` are not counted; only `word--word`\nor spaced ` -- ` forms count as an em-dash.\nWhy it reads as AI: models use the em-dash as a universal joiner where a human\nwould use a comma, a period, or parentheses, and they use it in every paragraph.\nFix: rebalance — keep one em-dash where it does real work; convert the rest to\nperiods (usually) or commas.\n\n### Semicolon and colon habits\nLooks like: semicolons joining independent clauses in casual prose; colons\nintroducing a clause that restates the previous one.\nScan: `punct.semicolon`, `punct.colon` per 1k.\nWhy it reads as AI: semicolons in a text message or casual email are rare for\nhumans; colon-led restatement is a summarizing tic.\nFix: rebalance — in casual registers, split into two sentences.\n\n## Structures\n\n### Tricolon habit (rule of three)\nLooks like: \"fast, reliable, and secure\"; \"we build, we ship, we learn\"; every\nlist has exactly three items.\nScan: `structures.tricolon` count. Rule of thumb: more than one per 150 words\nis a habit, not a choice. Counts any `A, B, and C` sequence, including clause\njoins; treat the number as a prompt to look, not a verdict.\nWhy it reads as AI: the three-item list is rhythmically satisfying and the model\nreaches for it reflexively; humans produce two- and four-item lists as often.\nFix: rebalance — cut one item, add a fourth, or make one item a sentence of its\nown. Keep a tricolon only where the rhythm is the point.\n\n### Not-X-but-Y framing\nLooks like: \"It's not about the code, it's about the culture.\" \"This isn't a\nsetback—it's an opportunity.\" \"Not only did we ship, but we learned.\"\nScan: `structures.not_but` count.\nWhy it reads as AI: a contrast frame that manufactures insight by negating a\nstrawman; models use it to sound reflective.\nFix: removal — state Y directly. Delete the negated X unless someone actually\nclaimed it.\n\n### Rhetorical question then answer\nLooks like: \"So what does this mean for teams? It means…\" \"Why does this matter?\nBecause…\"\nScan: `structures.rhetorical_q` count (outside dialogue).\nWhy it reads as AI: a transition device that simulates dialogue with the reader;\nhumans use it sparingly and usually with an edge.\nFix: removal — delete the question; keep the answer as a statement.\n\n### Parallel sentence openers\nLooks like: three or more consecutive sentences beginning with the same word\n(\"We… We… We…\", \"It… It… It…\").\nScan: `structures.parallel_openers` (runs of ≥3) and `openers.distinct_ratio`.\nRule of thumb: distinct-opener ratio below 0.6 in prose longer than 15 sentences\nis monotonous.\nWhy it reads as AI: anaphora is a deliberate rhetorical figure; unintentional\nanaphora is a generation artifact.\nFix: rebalance — vary the openers; combine two of the sentences.\n\n### Verbatim repetition\nLooks like: a phrase of four or more words reappearing intact across the piece\n— \"across all workstreams and teams\" three times in a status report — or a\nstring lifted from the prompt or title.\nScan: `repetition.phrases` (silent under 150 words); repeated phrases are the\nstrongest true-source predictor readers miss, OR 1.47 (Jakesch et al. 2023\n[jakesch-2023]); `repetition.repeated_phrase_rate` is reported-only.\nWhy it reads as AI: recurrence with no rhetorical intent; terminology, names,\nand identifiers must repeat — exempt technical and legal prose — and a refrain\nin fiction is deliberate.\nFix: removal — keep one instance and vary or cut the rest.\n\n### Trailing participial clause\nLooks like: a finished sentence that keeps going after a comma with an -ing\nverb: \", ensuring seamless integration\", \", allowing teams to move faster\",\n\", highlighting the importance of\".\nScan: `grammar.participial_tail` count, rate, and hits; ratio 5.3×, d = 1.38,\n2024-era models, news and academic registers (Reinhart et al. 2025\n[reinhart-2025]).\nWhy it reads as AI: the tack-on lets a sentence add a consequence without a\nnew subject, and models reach for it several times a paragraph.\nFix: removal — split into a sentence with its own subject, or drop the clause.\n\n### Uniform sentence length\nLooks like: every sentence 14–20 words; no fragments; no 40-word sentence.\nScan: `sentence_len.cv` (stdev/mean); `sentence_len.pct_over_30` (humans\n31.2% vs 17.5–21.0%, 2023 news corpus, direction not magnitude; Muñoz-Ortiz et\nal. 2024 [munoz-ortiz-2024]); `sentence_len.longest_flat_run` (reported-only).\nA flat profile is also the native shape of plain-language and technical prose\n— `tests/fixtures/human_plain.txt` sits in AI territory on every sentence\nmetric — and is not authorship evidence.\nRule of thumb: published human prose commonly 0.5–0.9; AI drafts often below\n0.4.\nWhy it reads as AI: models regress to the mean sentence; humans write in bursts.\nFix: rebalance — split one long sentence into a short one and a fragment; merge\ntwo mid-length sentences into a long one. Aim for range, not a target.\n\n### Uniform paragraph length\nLooks like: every paragraph three to four sentences; every paragraph opens with\na topic sentence and closes with a mini-conclusion.\nScan: `paragraph_len.cv`. Rule of thumb: below 0.3 across five or more\nparagraphs is uniform.\nWhy it reads as AI: the five-paragraph-essay template applied to everything.\nFix: rebalance — allow a one-sentence paragraph; let one paragraph run long.\n\n## Discourse moves\n\n### Validating opener\nLooks like: \"Great question!\" \"I'd be happy to help.\" \"Absolutely!\" \"That's a\nreally insightful point.\"\nScan: `wordlist.hits` includes \"great question\", \"i hope this helps\".\nWhy it reads as AI: assistant-style acknowledgement before content; humans\nanswer.\nFix: removal — start with the content.\n\n### Restating the prompt\nLooks like: the first paragraph paraphrases the question or task before\naddressing it.\nScan: none; judge by reading.\nWhy it reads as AI: models anchor by echoing input; humans assume the reader\nremembers what they asked.\nFix: removal — delete the paraphrase.\n\n### Summary closer\nLooks like: a final paragraph opening \"In conclusion\", \"Ultimately\", \"Overall\",\n\"In short\" that restates the opening.\nScan: `discourse.summary_closer` (boolean).\nWhy it reads as AI: essay-template closure on texts that do not need it; humans\nend when they are done.\nFix: removal — cut the paragraph, or end on the last concrete point.\n\n### Sign-off advice and offers\nLooks like: \"Remember to…\", \"Feel free to reach out\", \"Don't hesitate to…\",\n\"I hope this helps!\"\nScan: `wordlist.hits` includes \"reach out\", \"don't hesitate\", \"i hope this helps\".\nWhy it reads as AI: assistant boilerplate.\nFix: removal — end with the actual last thing you have to say, or a plain sign-off.\n\n### Safety disclaimer opener and AI self-reference\nLooks like: a first paragraph that qualifies before it answers — \"It's\nimportant to approach this carefully\", \"I'm not able to give specific advice,\nbut\", \"consult a professional\" — or any \"As an AI\" self-reference.\nScan: `discourse.disclaimer_opener.fired` and `.hits`; per-family range 46%\nvs 0.2% of responses (Rudnicka & Juzek 2026 [rudnicka-2026]).\nWhy it reads as AI: assistant safety framing on a text that asked for none;\nthe same phrases mid-document are an ordinary discourse observation.\nFix: removal — start with the answer.\n\n### Headings and bullets in short pieces\nLooks like: a 200-word email with three bold headers and two bulleted lists.\nScan: none; judge by reading.\nWhy it reads as AI: structure imposed regardless of length or medium.\nFix: removal — prose for anything under ~300 words unless the medium expects\nlists.\n# Style tells\n\nStoryScope's Style dimension (figurative language, sound, syntax, register,\ntone, allusion), filtered to the 20 features with a human-vs-AI gap of at least\n15 points (categorical) or 0.30 (1–5 scale). Base rates are measured on 61,575\nstories; see `data/README.md`. These apply to every text class; each entry says\nhow it shows up outside fiction.\n\nEntries are ordered by the size of the human-vs-AI gap, largest first.\n\n### Presence of extended conceit\nLooks like: a metaphor that is introduced and then developed across several\nsentences or the whole piece — the company as a ship, grief as a house with\nrooms, the codebase as a garden — with each paragraph extending it.\nBase rate: AI 83% / human 40%  (StoryScope STY_FIG_004)\nWhy it reads as AI: models sustain a governing metaphor because it is a\ncoherence strategy; most human writers drop a figure after one use.\nFix: removal — keep the first instance if it earns its place; cut every later\ncallback to the conceit and say the literal thing instead.\nOutside fiction: the \"journey\" or \"building blocks\" frame that runs through an\nentire blog post or team update.\n\n### Lexical register and consistency\nLooks like: a piece that stays in one register throughout — uniformly elevated,\nor uniformly neutral-standard — with no slang, no shift to plain talk, no\nsudden formal aside.\nBase rate: mixed register with code-switching — AI 19% / human 56%  (StoryScope STY_ALL_015)\nWhy it reads as AI: humans slip between registers as mood and audience shift\nmid-text; models hold a single register as a consistency default.\nFix: addition — only when in character: let one sentence go colloquial, or let\na plain paragraph be interrupted by a precise technical term. Do not sprinkle\nslang mechanically.\nOutside fiction: an email that never once says \"yeah\", \"honestly\", or \"ugh\"\nfrom a writer who would.\n\n### Sound Patterning Prominence\nLooks like: alliteration and assonance you notice while reading — \"the slow\nslide of silt\", \"a hollow, swallowing hush\" — recurring through the piece rather\nthan once at a deliberate moment.\nBase rate: noticeable sound patterning — AI 91% / human 55%  (StoryScope STY_TON_006)\nWhy it reads as AI: models reach for euphony by default, so the ear-pleasing\nversion of each phrase is the one that survives, while most human prose is\nsonically flat.\nFix: removal — keep the one sound effect that is placed for a reason and de-tune\nthe rest by swapping in the word you would have chosen without the ear in mind.\nOutside fiction: a product page where every feature name alliterates, or a\nheadline picked for sound over accuracy.\n\n### Conventional vs fresh figurative language\nLooks like: every image is a new one — \"the grief sat in her like a stone\nswallowed sideways\" — and no stock phrase appears anywhere in the piece.\nBase rate: predominantly fresh and inventive images — AI 65% / human 30%  (StoryScope STY_FIG_003)\nWhy it reads as AI: the direction is counter-intuitive — models are more\ninventive than humans, not more clichéd, and the tell is relentless invention\nwith no ordinary sentence between the images.\nFix: removal — cut most of the fresh images and let plain statement carry the\npassage; a stock phrase in the right place is a human signal, not a failure.\nOutside fiction: an essay where every paragraph opens with a new and unusual\ncomparison instead of stating the point.\n\n### Predominant tonal quality\nLooks like: earnestness throughout — nothing is undercut, no line is wry, and\nthe piece means everything it says at face value.\nBase rate: earnest or lyrical tone — AI 71% / human 40%  (StoryScope STY_TON_021)\nWhy it reads as AI: sincerity is the safe default for a model that cannot\npredict whether a joke will land.\nFix: removal — take the earnestness off at least one high point: undercut a\ngrand line, let a character be unimpressed, or state the thing flatly.\nOutside fiction: a launch post that is visibly moved by its own product, with no\ndry aside anywhere in it.\n\n### Sentence-structure repertoire\nLooks like: balanced series as the default sentence shape — \"It changed how we\nbuild, how we ship, how we think\" — paragraph after paragraph.\nBase rate: frequent parallel or list-like structures — AI 99% / human 70%  (StoryScope STY_CPX_012)\nWhy it reads as AI: this is near-universal in AI text, because parallelism is\nthe cheapest way to sound composed and models apply it by reflex.\nFix: removal — break the series: cut one limb, make one limb a sentence of its\nown, or replace the list with a single specific. See the tricolon habit in\n`surface-tells.md` for the surface-level check.\nOutside fiction: bullet-shaped sentences in an email — \"faster, cheaper, and\neasier to maintain\" — where one accurate clause would do.\n\n### Recurrent metaphorical motif\nLooks like: one image family threaded through the whole piece — weight, tide,\nmachinery — so that unrelated paragraphs reach for the same register of\ncomparison.\nBase rate: motif present — AI 96% / human 69%  (StoryScope STY_FIG_005)\nWhy it reads as AI: a recurring motif is a coherence device the model applies\nacross the whole text, while human writers rarely track their images that far.\nFix: removal — keep the motif's single strongest appearance and rewrite the\nothers from whatever the local scene or paragraph actually offers.\nOutside fiction: a strategy memo where everything is weather, momentum, or\nplumbing from the first line to the last.\n\n### Allusion domain diversity\nLooks like: references that stay in the safe canon — myth, history, literature —\nand never a named band, film, product, or team.\nBase rate: pop-culture or brand-name allusions — AI 13% / human 40%  (StoryScope STY_ALL_018)\nWhy it reads as AI: models avoid naming real commercial and cultural artifacts,\nso their references land in a timeless, unplaceable nowhere.\nFix: addition — only when in character: name the actual thing the writer would\nname, the specific show or product, instead of \"a popular streaming series\".\nOutside fiction: a post about consumer software that never names a competitor.\n\n### Use of irony and humor\nLooks like: nothing in the piece is meant other than literally — no joke, no\nsarcasm, no dry undercut anywhere in it.\nBase rate: any discernible humor or irony (inverting the straight-faced value) —\nAI 62% / human 88%  (StoryScope STY_TON_023)\nWhy it reads as AI: humor is the highest-risk register for a model, so playing\neverything straight is the safe move.\nFix: addition — only when in character: one dry line where the writer would\nactually be dry. Do not insert jokes into prose whose author has none.\nOutside fiction: an incident report or team update with not one wry remark, from\nsomeone whose speech is full of them.\n\n### Dominant Tonal Register\nLooks like: a narrative voice that lingers, reflects, and finds significance,\nrather than one that is reportorial, hardboiled, or analytic.\nBase rate: lyrical or meditative register — AI 77% / human 52%  (StoryScope STY_TON_001)\nWhy it reads as AI: the reflective register is the model's comfortable default\nand gets applied whatever the material is.\nFix: removal — cut the reflective sentences and let the reported facts stand,\nthen pick the register the material actually demands and hold it.\nOutside fiction: a postmortem that keeps pausing to consider what the outage\nmeant for the team.\n\n### Dominant Figurative Device Type\nLooks like: comparisons asserted rather than proposed — \"the deadline was a\nwall\" rather than \"the deadline felt like a wall\" — with metaphor crowding out\nsimile and plain description.\nBase rate: metaphor-dominant — AI 73% / human 50%  (StoryScope STY_FIG_002)\nWhy it reads as AI: metaphor is the more literary of the two moves, and models\ntake the more literary move.\nFix: removal — convert some metaphors back to similes or to literal statement;\nthe mix, not the metaphor itself, is what reads human.\nOutside fiction: business writing where processes are engines, funnels, and\nflywheels instead of being described.\n\n### Parataxis vs Hypotaxis Preference\nLooks like: syntax that never commits — some coordination, some subordination,\nevenly mixed, with no run of blunt short clauses and no long embedded sentence.\nBase rate: balanced parataxis and hypotaxis — AI 85% / human 64%  (StoryScope STY_CPX_004)\nWhy it reads as AI: the balanced middle is the average of all training prose,\nand averaging is what the model does.\nFix: removal — take out the balance: write one passage as a chain of short\ncoordinated clauses and another as a single long subordinated sentence.\nOutside fiction: documentation where every sentence has the same clause count\nregardless of how simple or complicated the step is.\n\n### Primary Function of Allusion\nLooks like: a reference used to point at the moral — \"like Icarus, we flew too\nclose\" — rather than to color a setting or characterize whoever made it.\nBase rate: allusion as theme-signposting or moral commentary — AI 46% / human 26%  (StoryScope STY_ALL_004)\nWhy it reads as AI: models use references to make the point legible, where human\nwriters more often use them for texture, humor, or offhand analogy.\nFix: removal — delete the signposting reference, or repurpose it so it says\nsomething about the person making it rather than about the theme.\nOutside fiction: an essay that closes on a myth or a quotation restating the\nargument.\n\n### Sound patterning devices\nLooks like: alliteration specifically, as the salient device whenever the prose\npushes — \"a steady, stubborn strain\", \"policy, practice, and posture\".\nBase rate: alliteration prominent — AI 98% / human 79%  (StoryScope STY_TON_025)\nWhy it reads as AI: alliteration is the sound effect producible by word choice\nalone, so it is the one models overuse.\nFix: removal — replace the alliterating word with the accurate one; if the\nphrase survives only because it sounds good, cut the phrase.\nOutside fiction: alliterative section headings and slogans in a deck or a\nREADME.\n\n### Use of Sentence Fragments\nLooks like: fragments for emphasis, several to a page. Short. Punchy. Like this.\nBase rate: fragments present and stylistically significant — AI 85% / human 67%  (StoryScope STY_CPX_003)\nWhy it reads as AI: the direction is counter-intuitive — AI fragments more than\nhumans do, because the one-beat emphatic fragment is a learned dramatic device,\nnot a sign of a loose human hand.\nFix: removal — rejoin most fragments into the sentences they broke off from, and\nkeep at most one where the break carries real emphasis.\nOutside fiction: a social post where every third line is a one-word paragraph.\n\n### Voice Markedness\nLooks like: a voice with flavor but no risk — a little rhythm, a few distinctive\nturns, no dialect, no verbal tic, nothing a reader could imitate.\nBase rate: moderately marked voice, distinct but not extreme — AI 98% / human 83%  (StoryScope STY_TON_005)\nWhy it reads as AI: almost every AI passage lands in this middle band, while\nhuman writing spreads out into plain report and into genuine idiosyncrasy.\nFix: removal — take the voice off the middle: either strip it back to plain\nreport, or commit to one real mannerism and carry it consistently.\nOutside fiction: internal writing that sounds like a company rather than like a\nperson.\n\n### Figurative Device Density\nLooks like: a metaphor or simile in most paragraphs, including in sentences that\nhad a job to do and did not need one.\nBase rate: AI 3.66 / human 3.00 on a 1–5 scale  (StoryScope STY_FIG_001)\nWhy it reads as AI: models decorate by default, and figurative density is the\nmost visible form that decoration takes.\nFix: rebalance — cut roughly a third of the figures, starting with those that\nexplain something already clear, and keep the ones doing work no literal\nsentence could do.\nOutside fiction: an explainer where every concept arrives with an analogy\nattached to it.\n\n### Rhythmic markedness of prose\nLooks like: cadence you can hear — balanced clauses, repeated openings,\nsentences resolving on a stressed beat — sustained across the whole piece.\nBase rate: AI 3.61 / human 3.17 on a 1–5 scale  (StoryScope STY_TON_024)\nWhy it reads as AI: the model optimizes each sentence for fluency, and sustained\nfluency turns into a metronome.\nFix: rebalance — break the meter: let one sentence end awkwardly, run another\npast its natural stop, or drop a clause that exists only for balance.\nOutside fiction: a speech-shaped post that reads as though written to be read\naloud when nobody will read it aloud.\n\n### Allusion density\nLooks like: prose that refers to almost nothing outside itself — no cited text,\nno dated event, no artifact a reader would recognize.\nBase rate: AI 2.26 / human 2.59 on a 1–5 scale  (StoryScope STY_ALL_017)\nWhy it reads as AI: models avoid specific external references because those are\nthe most checkable thing in a text, while humans reach for them constantly.\nFix: rebalance — add the reference the writer would actually have made, and\nconfirm it is real before keeping it.\nOutside fiction: a memo that cites no paper, no prior project, and no names.\n\n### Latinate vs Anglo-Saxon lexical flavor\nLooks like: \"utilize\", \"facilitate\", \"commence\", \"demonstrate\" where \"use\",\n\"help\", \"start\", and \"show\" would carry the same sense.\nBase rate: AI 2.83 / human 2.51 on a 1–5 scale  (StoryScope STY_ALL_016)\nWhy it reads as AI: the formal register dominates the training mass, so the\nlearned word wins unless the context pushes hard the other way.\nFix: rebalance — swap in the short Germanic word wherever the register does not\nrequire the long one; `surface-tells.md` carries the paired surface check.\nOutside fiction: a chat message written in the register of a policy document.\n","exit_code":0,"status":"completed"}}
-{"type":"item.started","item":{"id":"item_7","type":"command_execution","command":"/bin/zsh -lc 'python3 scripts/surface_scan.py /var/folders/fh/cczgqw9n4r97y43bbgz9py5w0000gn/T/tmp.yMTB1qMFiJ/ai_report.txt'","aggregated_output":"","exit_code":null,"status":"in_progress"}}
-{"type":"item.completed","item":{"id":"item_7","type":"command_execution","command":"/bin/zsh -lc 'python3 scripts/surface_scan.py /var/folders/fh/cczgqw9n4r97y43bbgz9py5w0000gn/T/tmp.yMTB1qMFiJ/ai_report.txt'","aggregated_output":"{\n  \"discourse\": {\n    \"summary_closer\": true,\n    \"disclaimer_opener\": {\n      \"fired\": true,\n      \"hits\": [\n        {\n          \"text\": \"it's important to approach\",\n          \"sentence\": 0\n        },\n        {\n          \"text\": \"i'm not able to\",\n          \"sentence\": 1\n        }\n      ]\n    }\n  },\n  \"dialogue\": {\n    \"ratio\": 0.0\n  },\n  \"words\": 620,\n  \"sentences\": 34,\n  \"paragraphs\": 12,\n  \"sentence_len\": {\n    \"mean\": 18.24,\n    \"stdev\": 3.46,\n    \"cv\": 0.19,\n    \"min\": 14,\n    \"max\": 27,\n    \"pct_over_30\": 0.0,\n    \"p90\": 25,\n    \"longest_flat_run\": 8\n  },\n  \"paragraph_len\": {\n    \"mean\": 2.83,\n    \"stdev\": 0.39,\n    \"cv\": 0.137,\n    \"min\": 2,\n    \"max\": 3\n  },\n  \"punct\": {\n    \"em_dash\": 0.0,\n    \"en_dash\": 0.0,\n    \"semicolon\": 0.0,\n    \"colon\": 0.0,\n    \"ellipsis\": 0.0,\n    \"exclamation\": 0.0,\n    \"counts\": {\n      \"em_dash\": 0,\n      \"en_dash\": 0,\n      \"semicolon\": 0,\n      \"colon\": 0,\n      \"ellipsis\": 0,\n      \"exclamation\": 0\n    }\n  },\n  \"structures\": {\n    \"tricolon\": 1,\n    \"not_but\": 1,\n    \"rhetorical_q\": 0,\n    \"parallel_openers\": 0\n  },\n  \"openers\": {\n    \"distinct_ratio\": 0.735\n  },\n  \"wordlist\": {\n    \"hits\": [],\n    \"rate\": 0.0\n  },\n  \"hedges\": {\n    \"rate\": 0.0\n  },\n  \"intensifiers\": {\n    \"rate\": 0.0\n  },\n  \"repetition\": {\n    \"too_short\": false,\n    \"repeated_phrase_rate\": 3.2,\n    \"longest_repeat\": 5,\n    \"phrases\": [\n      {\n        \"text\": \"across all workstreams and teams\",\n        \"count\": 3,\n        \"sentences\": [\n          5,\n          17,\n          32\n        ]\n      }\n    ]\n  },\n  \"grammar\": {\n    \"participial_tail\": {\n      \"count\": 14,\n      \"rate\": 22.6,\n      \"hits\": [\n        {\n          \"text\": \", reflecting the late discovery of schema drift in the\",\n          \"sentence\": 2\n        },\n        {\n          \"text\": \", ensuring alignment across teams before any record reaches\",\n          \"sentence\": 3\n        },\n        {\n          \"text\": \", exceeding the target we set in March\",\n          \"sentence\": 4\n        },\n        {\n          \"text\": \", creating a sense of momentum that was missing last quarter\",\n          \"sentence\": 5\n        },\n        {\n          \"text\": \", allowing designers to retire eleven legacy patterns\",\n          \"sentence\": 6\n        },\n        {\n          \"text\": \", giving on-call staff a clearer signal during incidents\",\n          \"sentence\": 9\n        },\n        {\n          \"text\": \", matching the level the platform group had proposed\",\n          \"sentence\": 10\n        },\n        {\n          \"text\": \", resolving most of them within the first business day\",\n          \"sentence\": 11\n        },\n        {\n          \"text\": \", leaving two senior positions unfilled going into the next\",\n          \"sentence\": 14\n        },\n        {\n          \"text\": \", assuming the compensation adjustments are approved\",\n          \"sentence\": 16\n        }\n      ]\n    },\n    \"container_of\": {\n      \"count\": 2,\n      \"hits\": [\n        {\n          \"text\": \"a sense of\",\n          \"sentence\": 5\n        },\n        {\n          \"text\": \"The weight of\",\n          \"sentence\": 15\n        }\n      ]\n    }\n  },\n  \"nominalization\": {\n    \"count\": 24,\n    \"hits\": [\n      {\n        \"text\": \"validation\",\n        \"count\": 2\n      },\n      {\n        \"text\": \"migration\",\n        \"count\": 2\n      },\n      {\n        \"text\": \"implementation\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"ingestion\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"alignment\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"adoption\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"completion\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"optimization\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"deflection\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"decision\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"compensation\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"adjustments\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"coordination\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"escalation\",\n        \"count\": 1\n      },\n      {\n        \"text\": \"transformation\",\n        \"count\": 1\n      }\n    ],\n    \"of_frames\": [\n      {\n        \"text\": \"the implementation of\",\n        \"sentence\": 2\n      },\n      {\n        \"text\": \"the migration of\",\n        \"sentence\": 7\n      },\n      {\n        \"text\": \"the completion of\",\n        \"sentence\": 7\n      },\n      {\n        \"text\": \"the optimization of\",\n        \"sentence\": 8\n      },\n      {\n        \"text\": \"the escalation of\",\n        \"sentence\": 18\n      },\n      {\n        \"text\": \"the transformation of\",\n        \"sentence\": 19\n      },\n      {\n        \"text\": \"the remediation of\",\n        \"sentence\": 20\n      },\n      {\n        \"text\": \"the integration of\",\n        \"sentence\": 26\n      }\n    ]\n  }\n}\n","exit_code":0,"status":"completed"}}
+## Tool calls
+/bin/zsh -lc 'python3 scripts/surface_scan.py --text /var/folders/fh/cczgqw9n4r97y43bbgz9py5w0000gn/T/tmp.ODqhB1vxyV/ai_report.txt'
+/bin/zsh -lc 'python3 scripts/surface_scan.py /var/folders/fh/cczgqw9n4r97y43bbgz9py5w0000gn/T/tmp.ODqhB1vxyV/ai_report.txt'
+
+## Scanner output
+words 620 · sentences 34 · paragraphs 12
+sentence length: mean 18.24, stdev 3.46, cv 0.19 (min 14, max 27)
+paragraph length: mean 2.83 sentences, stdev 0.39, cv 0.137
+per 1k words: em-dash 0.0 (0) · en-dash 0.0 (0) · semicolon 0.0 (0) · colon 0.0 (0) · ellipsis 0.0 (0) · exclamation 0.0 (0)
+structures: tricolon 1 · not-but 1 · rhetorical-q 0 · parallel-opener runs 0 · distinct openers 0.735
+wordlist: 0.0/1k — none
+hedges 0.0/1k · intensifiers 0.0/1k
+summary closer: yes · dialogue paragraphs: 0%
+repetition: 3.2/1k · longest repeat 5 · "across all workstreams and teams"×3
+grammar: participial tails 14 (22.6/1k) ", reflecting the late discovery of schema drift in the" · container-of 2 "a sense of"
+sentence tail: over-30 0.0% · p90 25 · longest flat run 8
+nominalization hits: 24 (validation×2, migration×2, implementation×1) · frames: "the implementation of", "the migration of"
+
+{
+  "discourse": {
+    "summary_closer": true,
+    "disclaimer_opener": {
+      "fired": true,
+      "hits": [
+        {
+          "text": "it's important to approach",
+          "sentence": 0
+        },
+        {
+          "text": "i'm not able to",
+          "sentence": 1
+        }
+      ]
+    }
+  },
+  "dialogue": {
+    "ratio": 0.0
+  },
+  "words": 620,
+  "sentences": 34,
+  "paragraphs": 12,
+  "sentence_len": {
+    "mean": 18.24,
+    "stdev": 3.46,
+    "cv": 0.19,
+    "min": 14,
+    "max": 27,
+    "pct_over_30": 0.0,
+    "p90": 25,
+    "longest_flat_run": 8
+  },
+  "paragraph_len": {
+    "mean": 2.83,
+    "stdev": 0.39,
+    "cv": 0.137,
+    "min": 2,
+    "max": 3
+  },
+  "punct": {
+    "em_dash": 0.0,
+    "en_dash": 0.0,
+    "semicolon": 0.0,
+    "colon": 0.0,
+    "ellipsis": 0.0,
+    "exclamation": 0.0,
+    "counts": {
+      "em_dash": 0,
+      "en_dash": 0,
+      "semicolon": 0,
+      "colon": 0,
+      "ellipsis": 0,
+      "exclamation": 0
+    }
+  },
+  "structures": {
+    "tricolon": 1,
+    "not_but": 1,
+    "rhetorical_q": 0,
+    "parallel_openers": 0
+  },
+  "openers": {
+    "distinct_ratio": 0.735
+  },
+  "wordlist": {
+    "hits": [],
+    "rate": 0.0
+  },
+  "hedges": {
+    "rate": 0.0
+  },
+  "intensifiers": {
+    "rate": 0.0
+  },
+  "repetition": {
+    "too_short": false,
+    "repeated_phrase_rate": 3.2,
+    "longest_repeat": 5,
+    "phrases": [
+      {
+        "text": "across all workstreams and teams",
+        "count": 3,
+        "sentences": [
+          5,
+          17,
+          32
+        ]
+      }
+    ]
+  },
+  "grammar": {
+    "participial_tail": {
+      "count": 14,
+      "rate": 22.6,
+      "hits": [
+        {
+          "text": ", reflecting the late discovery of schema drift in the",
+          "sentence": 2
+        },
+        {
+          "text": ", ensuring alignment across teams before any record reaches",
+          "sentence": 3
+        },
+        {
+          "text": ", exceeding the target we set in March",
+          "sentence": 4
+        },
+        {
+          "text": ", creating a sense of momentum that was missing last quarter",
+          "sentence": 5
+        },
+        {
+          "text": ", allowing designers to retire eleven legacy patterns",
+          "sentence": 6
+        },
+        {
+          "text": ", giving on-call staff a clearer signal during incidents",
+          "sentence": 9
+        },
+        {
+          "text": ", matching the level the platform group had proposed",
+          "sentence": 10
+        },
+        {
+          "text": ", resolving most of them within the first business day",
+          "sentence": 11
+        },
+        {
+          "text": ", leaving two senior positions unfilled going into the next",
+          "sentence": 14
+        },
+        {
+          "text": ", assuming the compensation adjustments are approved",
+          "sentence": 16
+        }
+      ]
+    },
+    "container_of": {
+      "count": 2,
+      "hits": [
+        {
+          "text": "a sense of",
+          "sentence": 5
+        },
+        {
+          "text": "The weight of",
+          "sentence": 15
+        }
+      ]
+    }
+  },
+  "nominalization": {
+    "count": 24,
+    "hits": [
+      {
+        "text": "validation",
+        "count": 2
+      },
+      {
+        "text": "migration",
+        "count": 2
+      },
+      {
+        "text": "implementation",
+        "count": 1
+      },
+      {
+        "text": "ingestion",
+        "count": 1
+      },
+      {
+        "text": "alignment",
+        "count": 1
+      },
+      {
+        "text": "adoption",
+        "count": 1
+      },
+      {
+        "text": "completion",
+        "count": 1
+      },
+      {
+        "text": "optimization",
+        "count": 1
+      },
+      {
+        "text": "deflection",
+        "count": 1
+      },
+      {
+        "text": "decision",
+        "count": 1
+      },
+      {
+        "text": "compensation",
+        "count": 1
+      },
+      {
+        "text": "adjustments",
+        "count": 1
+      },
+      {
+        "text": "coordination",
+        "count": 1
+      },
+      {
+        "text": "escalation",
+        "count": 1
+      },
+      {
+        "text": "transformation",
+        "count": 1
+      }
+    ],
+    "of_frames": [
+      {
+        "text": "the implementation of",
+        "sentence": 2
+      },
+      {
+        "text": "the migration of",
+        "sentence": 7
+      },
+      {
+        "text": "the completion of",
+        "sentence": 7
+      },
+      {
+        "text": "the optimization of",
+        "sentence": 8
+      },
+      {
+        "text": "the escalation of",
+        "sentence": 18
+      },
+      {
+        "text": "the transformation of",
+        "sentence": 19
+      },
+      {
+        "text": "the remediation of",
+        "sentence": 20
+      },
+      {
+        "text": "the integration of",
+        "sentence": 26
+      }
+    ]
+  }
+}
+
 
 ## Output
-Audited `ai_report.txt` as **expository prose**: 620 words, 34 sentences. File unchanged. These are stylistic patterns, not proof of AI authorship.
+I’ll use the humanize skill to audit `ai_report.txt` and leave the file unchanged.
+Audited `ai_report.txt` as **expository prose** (620 words). File unchanged. These are style observations, not proof of AI authorship.
 
 | # | Tell | Evidence | Base rate / metric |
 |---|------|----------|--------------------|
-| 1 | Verbatim repetition | “across all workstreams and teams” (×3); repeated general wording without a clear rhetorical purpose. | Scanner: 3 occurrences of the same five-word phrase. |
-| 2 | Uniform sentence length | “Four product surfaces migrated to the new components, allowing designers to retire eleven legacy patterns.” exemplifies the steady sentence rhythm. | Length CV: **0.19**; range: **14–27 words**. Skill heuristic flags below 0.4; technical prose can also fit this pattern. |
-| 3 | Uniform paragraph length | The paragraph beginning “On the reliability side” follows the recurring three-sentence update format. | All 12 paragraphs contain **2–3 sentences**; CV **0.137**, below the skill’s 0.3 uniformity threshold. |
-| 4 | Frequent trailing participial clauses | “, ensuring alignment across teams before any record reaches”; “, allowing designers to retire eleven legacy patterns” | Scanner: **14 candidates**, **22.6/1,000 words**. Normal in reports, but frequent enough here to make the syntax repetitive. |
-| 5 | Disclaimer opener | “It's important to approach this update carefully”; “I'm not able to share vendor pricing here” | `discourse.disclaimer_opener.fired: true`; **2 matches**. The caution is generic; the pricing restriction may serve a real purpose. |
-| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan despite the schema issue” | `discourse.summary_closer: true`. Repeats the opening’s favorable assessment; the subsequent Friday deadline adds useful information. |
+| 1 | Repeated participial endings | “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns” | Scanner flags 14 tails, or 22.6 per 1,000 words. The ingestion paragraph uses this ending in all three sentences—noticeable even for a report. |
+| 2 | Verbatim repetition | “across all workstreams and teams” (×3) | Same five-word phrase repeated in three separate paragraphs; generic wording rather than necessary technical terminology. |
+| 3 | Uniform paragraph length | Paragraphs beginning “Adoption of the shared design system” and “On the reliability side” both follow the same three-sentence format. | All 12 paragraphs contain 2–3 sentences; paragraph-length CV 0.137. Skill heuristic: below 0.3 across ≥5 paragraphs is uniform. |
+| 4 | Uniform sentence length | “The compliance team confirmed that the evidence collection process now runs automatically each week.” | All 34 sentences fall between 14 and 27 words; sentence-length CV 0.19. Skill heuristic flags below 0.4, though report writing can legitimately be this steady. |
+| 5 | Disclaimer opener | “It's important to approach this update carefully” | Scanner flags two disclaimer phrases in the opening. The general caution delays the update; the vendor-pricing restriction may have a legitimate purpose. |
+| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” | `summary_closer: true`. Repeats the opening’s reassuring assessment; the following Friday deadline adds useful information. |
+Audited `ai_report.txt` as **expository prose** (620 words). File unchanged. These are style observations, not proof of AI authorship.
+
+| # | Tell | Evidence | Base rate / metric |
+|---|------|----------|--------------------|
+| 1 | Repeated participial endings | “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns” | Scanner flags 14 tails, or 22.6 per 1,000 words. The ingestion paragraph uses this ending in all three sentences—noticeable even for a report. |
+| 2 | Verbatim repetition | “across all workstreams and teams” (×3) | Same five-word phrase repeated in three separate paragraphs; generic wording rather than necessary technical terminology. |
+| 3 | Uniform paragraph length | Paragraphs beginning “Adoption of the shared design system” and “On the reliability side” both follow the same three-sentence format. | All 12 paragraphs contain 2–3 sentences; paragraph-length CV 0.137. Skill heuristic: below 0.3 across ≥5 paragraphs is uniform. |
+| 4 | Uniform sentence length | “The compliance team confirmed that the evidence collection process now runs automatically each week.” | All 34 sentences fall between 14 and 27 words; sentence-length CV 0.19. Skill heuristic flags below 0.4, though report writing can legitimately be this steady. |
+| 5 | Disclaimer opener | “It's important to approach this update carefully” | Scanner flags two disclaimer phrases in the opening. The general caution delays the update; the vendor-pricing restriction may have a legitimate purpose. |
+| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” | `summary_closer: true`. Repeats the opening’s reassuring assessment; the following Friday deadline adds useful information. |

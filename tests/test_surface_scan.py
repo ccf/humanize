@@ -121,6 +121,18 @@ def test_main_reads_file(tmp_path, capsys):
     assert json.loads(capsys.readouterr().out)["words"] == 5
 
 
+def test_main_rejects_binary_document_with_extract_hint(tmp_path, capsys):
+    import pytest
+
+    p = tmp_path / "report.docx"
+    p.write_bytes(b"PK\x03\x04\xff\xfe\x00\x00binary zip payload \x93\x94")
+    with pytest.raises(SystemExit) as exc:
+        ss.main([str(p)])
+    assert exc.value.code == 1
+    err = capsys.readouterr().err
+    assert "not a text file" in err and "extract it first" in err
+
+
 def test_words_keeps_curly_apostrophe_inside_token():
     # Uses U+2019 (right single quotation mark)
     curly_apos = chr(0x2019)
@@ -338,6 +350,22 @@ def test_summary_closer_one_word_closers_require_a_comma():
         )
         is True
     )
+
+
+def test_summary_closer_ignores_split_signoff_lines():
+    paras = [
+        "Hi Sarah,",
+        "I'd be happy to help you navigate the complexities of the migration timeline.",
+        "Our team has carefully evaluated three key areas: performance, scalability, "
+        "and maintainability.",
+        "It's not just about moving the data; it's about transforming how we work.",
+        "Ultimately, this migration is a testament to our commitment; by focusing on performance, "
+        "scalability, and maintainability we can achieve a smooth transition.",
+        "Please don't hesitate to reach out if you have any questions. I'm here to help!",
+        "Best regards,",
+        "Jordan",
+    ]
+    assert ss.summary_closer(paras) is True
 
 
 def test_dialogue_ratio():

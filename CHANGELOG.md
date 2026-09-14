@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-14
+
+### Added
+- Word, PDF, PowerPoint, ODT, and RTF inputs: the skill now delegates text
+  extraction to Anthropic's `docx`/`pdf` skills (`document-skills` plugin) and
+  audits the extracted Markdown; README documents the optional install.
+
+### Fixed
+- `surface_scan.py` reports "not a text file — extract it first" instead of a
+  `UnicodeDecodeError` traceback when given a binary document.
+
 ## [0.1.1] - 2026-09-13
 
 ### Changed
@@ -50,6 +61,7 @@ Initial release (#1).
   CI (pre-commit, pytest on Python 3.9 and 3.13, `claude plugin validate
   --strict`), and a Bugbot review guide.
 
-[Unreleased]: https://github.com/ccf/humanize/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/ccf/humanize/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/ccf/humanize/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ccf/humanize/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ccf/humanize/releases/tag/v0.1.0

@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Remove AI tells from prose. Skill + /humanize command grounded in StoryScope (arXiv 2604.03136).",
-    "version": "0.1.1"
+    "version": "0.1.2"
   },
   "plugins": [
     {
       "name": "humanize",
       "description": "Audit prose for AI tells and rewrite it to read as natural human writing, grounded in StoryScope's measured human-vs-AI feature gaps",
       "source": "./plugins/humanize",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "author": { "name": "ccf" },
       "license": "MIT",
       "keywords": ["writing", "prose", "editing", "ai-detection", "storyscope", "humanize"],

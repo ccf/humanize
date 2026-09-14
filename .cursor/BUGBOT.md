@@ -10,7 +10,14 @@ evidence from the studies in `skills/humanize/references/SOURCES.md`. Design spe
   Python standard library and runs on Python 3.9+. Flag any third-party import
   or 3.10+ syntax (match statements, `X | Y` in runtime positions, PEP 604 in
   non-annotation code).
-- Nothing under `tests/` or `skills/**/scripts/` makes network or LLM calls.
+- Nothing under `tests/`, `skills/**/scripts/`, or `tools/package_skill_zip.py` makes network or LLM calls.
+- `skills/` is harness-agnostic: no harness variables (`${CLAUDE_…}`, `HERMES_SKILL_DIR`,
+  `CURSOR_…`, `CODEX_…`) and no install commands inside it; frontmatter is exactly the Agent
+  Skills fields (`argument-hint` is a hard error outside Claude Code). `tests/test_portability.py`
+  enforces both.
+- Version lives in `plugin.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, both
+  `marketplace.json` fields, `pyproject.toml`, and the newest CHANGELOG heading —
+  `tests/test_portability.py` fails on drift.
 - A `Base rate:` line in `skills/humanize/references/*.md`
   must trace to a row in `data/storyscope_feature_gaps.csv` (or a future CSV
   documented in `data/README.md`; none added in v0.2). If a PR changes a

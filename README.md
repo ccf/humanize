@@ -18,21 +18,36 @@ resolves in `references/SOURCES.md`.
 
 ## Install
 
-```
-/plugin marketplace add ccf/humanize
-/plugin install humanize@humanize
-```
+Requires Python 3.9+ on `PATH` for the scanner. No other dependencies. Every
+command below was checked against its CLI's `--help` for this release.
 
-Requires Python 3.9+ on `PATH` for the scanner. No other dependencies.
+| Harness | Install | Verify | Invoke |
+|---|---|---|---|
+| Claude Code | `/plugin marketplace add ccf/humanize` then `/plugin install humanize@humanize` | `claude plugin list` | `/humanize …` or automatically |
+| Codex CLI | `codex plugin marketplace add ccf/humanize` then `codex plugin add humanize@humanize` — or `cp -R skills/humanize ~/.agents/skills/` | `codex debug prompt-input "hi"` lists the skill | `$humanize …` or automatically |
+| Cursor | `cp -R skills/humanize ~/.cursor/skills/` (every project) or `.cursor/skills/` (this project) | the skill appears in the `/` menu | `/humanize …` or automatically |
+| Hermes Agent | `hermes skills install ccf/humanize/humanize --category writing`; in a running session, `/reload-skills` | `hermes skills list` | `/humanize …` or automatically |
+| Any Agent-Skills harness | `npx skills add ccf/humanize` or `cp -R skills/humanize ~/.agents/skills/` | harness-specific | harness-specific |
+| Claude Desktop — Cowork | Customize → Plugins → Add from repository `ccf/humanize` → install `humanize` | listed under Customize → Plugins | `/` or `+` picker, or automatically |
+| Claude Desktop — chat (claude.ai) | Customize → Skills → upload `humanize-skill-<version>.zip` from the [latest release](https://github.com/ccf/humanize/releases); "Code execution and file creation" must be on | listed under Customize → Skills | automatically, or the sidebar `/` menu |
 
-Optional, for Word/PDF/PowerPoint inputs: Anthropic's `document-skills`
-plugin, which humanize delegates extraction to (its `docx` read path uses
-`pandoc`; `brew install pandoc` on macOS).
+Notes:
 
-```
-/plugin marketplace add anthropics/skills
-/plugin install document-skills@anthropic-agent-skills
-```
+- **Codex** reads `<repo>/.agents/skills/` and `~/.agents/skills/` but not `.claude/skills/`, and
+  caps the injected skills catalog at 2% of the context window; a long catalog drops skills.
+- **Cursor** syncs only `~/.cursor/skills/` to Cloud Agents, and only with **Sync Skills for Cloud
+  Agents** on (Settings → Agents). The Cursor marketplace is reviewed by hand and has no CLI.
+- **Hermes** scans installed scripts (`surface_scan.py` is standard-library and passes) and runs
+  the scanner on the host, so on a remote terminal backend (docker, modal, ssh) the scan step is
+  skipped and the audit proceeds from reading alone. `hermes plugins install` also works on
+  recent builds but installs the package disabled and read-only; prefer `hermes skills install`.
+  Installing from a raw `SKILL.md` URL fetches one file and is not supported.
+- **Claude Desktop** picks up a Cowork plugin update only when `version` changes. In claude.ai
+  chat the skill triggers by description; picking it from the `/` menu passes no arguments.
+- **Word, PDF, PowerPoint inputs.** humanize delegates extraction to the harness's document
+  skills. In Claude Code that is Anthropic's `document-skills` plugin (`/plugin marketplace add
+  anthropics/skills`, `/plugin install document-skills@anthropic-agent-skills`; its `docx` read
+  path uses `pandoc` — `brew install pandoc` on macOS); Claude Desktop ships the same skills.
 
 ## Use
 

@@ -294,6 +294,85 @@ def repetition_block(sentences: list[str], n_words: int) -> dict:
     }
 
 
+ING_STOPLIST = frozenset(
+    """morning evening thing something nothing anything everything during including following
+    according regarding concerning notwithstanding pending considering king ring spring string wing
+    ceiling wedding clothing painting meeting training funding housing beginning""".split()
+)
+PREP_SUB = frozenset(
+    """in on at by after before during since for with from under over within
+    when while if although as once until""".split()
+)
+FINITE_AUX = frozenset(
+    """is are was were be been has have had do does did will would
+    can could should may might must""".split()
+)
+_PARTICIPIAL_TAIL_RE = re.compile(r",\s+(?:\w+ly\s+)?(\w+ing)\b", re.I)
+_CLAUSE_END_RE = re.compile(r"[,;:—.!?]")
+_LIST_CONTINUATION_RE = re.compile(r"^(?:,|and\b|or\b)", re.I)
+_LIST_ITEM_TAIL_RE = re.compile(r"^\s+\w+,\s*(?:and|or)\b", re.I)
+CONTAINER_HEADS = (
+    "sense",
+    "mix",
+    "blend",
+    "weight",
+    "flicker",
+    "pang",
+    "glimmer",
+    "web",
+    "sea",
+    "mask",
+    "residue",
+    "fabric",
+    "foundation",
+)
+_CONTAINER_OF_RE = re.compile(
+    r"\b(?:a|an|the)\s+(?:\w+\s+)?(?:" + "|".join(CONTAINER_HEADS) + r")\s+of\b", re.I
+)
+
+
+def clause_text(sentence: str, start: int, head_end: int) -> str:
+    m = _CLAUSE_END_RE.search(sentence, head_end)
+    end = m.start() if m else len(sentence)
+    snippet = sentence[start : min(end, start + 60)]
+    if end > start + 60 and " " in snippet:
+        snippet = snippet[: snippet.rfind(" ")]
+    return snippet.rstrip()
+
+
+def _is_fronted_adverbial(prefix: str) -> bool:
+    toks = [w.lower() for w in words(prefix)]
+    return (
+        bool(toks)
+        and toks[0] in PREP_SUB
+        and not any(t in FINITE_AUX or t.endswith("ed") for t in toks)
+    )
+
+
+def participial_tails(sentences: list[str]) -> list[dict]:
+    hits = []
+    for si, s in enumerate(sentences):
+        first_comma = s.find(",")
+        for m in _PARTICIPIAL_TAIL_RE.finditer(s):
+            if m.group(1).lower() in ING_STOPLIST:
+                continue
+            if m.start() == first_comma and _is_fronted_adverbial(s[: m.start()]):
+                continue
+            rest = s[m.end() :]
+            if _LIST_CONTINUATION_RE.match(rest.lstrip()) or _LIST_ITEM_TAIL_RE.match(rest):
+                continue
+            hits.append({"text": clause_text(s, m.start(), m.end()), "sentence": si})
+    return hits
+
+
+def container_phrases(sentences: list[str]) -> list[dict]:
+    return [
+        {"text": m.group(0), "sentence": si}
+        for si, s in enumerate(sentences)
+        for m in _CONTAINER_OF_RE.finditer(s)
+    ]
+
+
 AI_WORDLIST = sorted(
     {
         "a beacon of",
@@ -525,6 +604,8 @@ def analyze(text: str) -> dict:
     sents = split_sentences(text)
     n_words = len(words(text))
     wl = phrase_hits(sents, AI_WORDLIST)
+    tails = participial_tails(sents)
+    containers = container_phrases(sents)
     return {
         "discourse": {"summary_closer": summary_closer(paras)},
         "dialogue": {"ratio": dialogue_ratio(paras)},
@@ -545,6 +626,14 @@ def analyze(text: str) -> dict:
         "hedges": {"rate": _rate_of(phrase_hits(sents, HEDGES), n_words)},
         "intensifiers": {"rate": _rate_of(phrase_hits(sents, INTENSIFIERS), n_words)},
         "repetition": repetition_block(sents, n_words),
+        "grammar": {
+            "participial_tail": {
+                "count": len(tails),
+                "rate": per_1k(len(tails), n_words),
+                "hits": tails[:10],
+            },
+            "container_of": {"count": len(containers), "hits": containers[:10]},
+        },
     }
 
 

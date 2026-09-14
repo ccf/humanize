@@ -533,3 +533,60 @@ def test_repetition_block_rate_and_too_short():
         "longest_repeat": 0,
         "phrases": [],
     }
+
+
+def test_participial_tail_hits_canonical_forms_and_extracts_clause():
+    s = ["We shipped the release, ensuring alignment across teams before the freeze."]
+    hits = ss.participial_tails(s)
+    assert hits == [{"text": ", ensuring alignment across teams before the freeze", "sentence": 0}]
+    assert ss.participial_tails(['"I know," she said, smiling.']) == [
+        {"text": ", smiling", "sentence": 0}
+    ]
+    assert ss.participial_tails(["Costs rose, driving the decision."]) == [
+        {"text": ", driving the decision", "sentence": 0}
+    ]
+    assert ss.participial_tails(["Revenue grew, quickly outpacing the plan."])[0]["text"] == (
+        ", quickly outpacing the plan"
+    )
+
+
+def test_participial_tail_exclusions():
+    assert ss.participial_tails(["In 2024, rising costs shaped the plan."]) == []
+    assert ss.participial_tails(["On Monday, marketing shipped the page."]) == []
+    assert ss.participial_tails(["The team focused on planning, testing, and shipping."]) == []
+    assert ss.participial_tails(["We paused, pending the audit."]) == []
+    assert (
+        ss.participial_tails(["Readers include PhD candidates, working parents, or immigrants."])
+        == []
+    )
+    assert (
+        ss.participial_tails(["After the release shipped, ensuring alignment took a week."]) != []
+    )
+
+
+def test_participial_tail_clause_text_capped_at_60_chars_on_a_word_boundary():
+    s = ["We shipped, ensuring " + " ".join(["alignment"] * 12) + " more."]
+    text = ss.participial_tails(s)[0]["text"]
+    assert len(text) <= 60 and not text.endswith("alignmen")
+
+
+def test_container_phrases():
+    s = [
+        "She felt a sense of unease and the quiet weight of the decision.",
+        "The foundation of the house held.",
+    ]
+    hits = ss.container_phrases(s)
+    assert [h["text"] for h in hits] == ["a sense of", "the quiet weight of", "The foundation of"]
+    assert [h["sentence"] for h in hits] == [0, 0, 1]
+    assert ss.container_phrases(["A sea change is coming."]) == []
+
+
+def test_analyze_grammar_block_shape():
+    r = ss.analyze(
+        "We shipped the release, ensuring alignment across teams. She felt a sense of dread."
+    )
+    g = r["grammar"]
+    assert g["participial_tail"]["count"] == 1
+    assert g["participial_tail"]["rate"] == ss.per_1k(1, r["words"])
+    assert set(g["participial_tail"]["hits"][0]) == {"text", "sentence"}
+    assert g["container_of"] == {"count": 1, "hits": [{"text": "a sense of", "sentence": 1}]}

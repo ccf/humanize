@@ -1,6 +1,6 @@
 [project]
 name = "humanize-plugin"
-version = "0.3.0"
+version = "0.3.1"
 description = "Agent skill that audits prose for AI tells and rewrites it in the author's voice, on evidence from 13 studies."
 requires-python = ">=3.9"
 license = "MIT"

@@ -51,6 +51,8 @@ Never run bare `ruff format .` — ruff 0.16 formats Python fences inside
   `.codex-plugin/plugin.json`, both `marketplace.json` fields, `pyproject.toml`,
   and the newest CHANGELOG heading — `tests/test_portability.py` fails on drift.
 - Nothing under `tests/`, `skills/**/scripts/`, or `tools/package_skill_zip.py` touches the network.
+- Tracked text files are LF (`.gitattributes`: `* text=auto eol=lf`) — the Claude Desktop skill
+  loader rejects CRLF frontmatter; `tests/test_portability.py` fails on any CR.
 - `skills/` is harness-agnostic: no harness variables (`${CLAUDE_…}`, `HERMES_SKILL_DIR`,
   `CURSOR_…`, `CODEX_…`) and no install commands inside it; frontmatter is exactly the Agent
   Skills fields (`argument-hint` is a hard error outside Claude Code). `tests/test_portability.py`

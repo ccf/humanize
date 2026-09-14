@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-14
+
+### Added
+- `.gitattributes` forcing LF on every clone, and a test that no tracked text file carries a
+  CR: the Claude Desktop skill loader rejects CRLF frontmatter, and "Add from repository" is a
+  Git clone subject to the host's `core.autocrlf`.
+
+### Changed
+- README: the Claude Desktop row now leads with the repository route (macOS and Windows) and
+  says to restart the app after installing or updating a plugin — the `/` menu can list
+  `humanize:humanize` before it is invocable. The skill zip is the alternative for claude.ai
+  without the Desktop app.
+- Acceptance record: phase-2 outcomes (Codex and Hermes installs from `main`, the 0.2.0 → 0.3.0
+  plugin upgrade, Desktop on both platforms) recorded in `docs/acceptance/v0.3/README.md`.
+
 ## [0.3.0] - 2026-09-14
 
 ### Added
@@ -115,7 +130,8 @@ Initial release (#1).
   CI (pre-commit, pytest on Python 3.9 and 3.13, `claude plugin validate
   --strict`), and a Bugbot review guide.
 
-[Unreleased]: https://github.com/ccf/humanize/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ccf/humanize/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/ccf/humanize/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/ccf/humanize/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ccf/humanize/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/ccf/humanize/compare/v0.1.1...v0.1.2

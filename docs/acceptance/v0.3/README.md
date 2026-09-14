@@ -17,7 +17,9 @@ temp project for Codex and Cursor, `--plugin-dir .` for Claude Code, a copy into
 `~/.hermes/skills/writing/humanize` for Hermes), sends one non-interactive request,
 and captures the output.
 
-Every transcript has three H2 sections, in this fixed order:
+A PASS or FAIL transcript has three H2 sections, in this fixed order; a SKIP
+transcript (authentication failure) is the harness's raw CLI output with no section
+headings at all:
 
 - `## Tool calls` — the commands or tool inputs the agent issued (for Claude Code and
   Codex, only the actual scanner invocation; reads of `SKILL.md` never appear here).
@@ -28,15 +30,20 @@ Every transcript has three H2 sections, in this fixed order:
   `--output-format text`, Hermes's oneshot/quiet mode), the first two sections say so
   and the full raw response goes under `## Output`.
 
+The only CLI state the script touches across a run is a transient disable/enable of
+the installed `humanize@humanize` plugin around the Claude Code run (so `--plugin-dir
+.` is exercised instead of the installed copy); it is re-enabled whether or not the
+run succeeds, and nothing else on the machine is reconfigured.
+
 ## PASS rule
 
 A harness is judged PASS only with evidence that both the skill and the scanner ran.
 The judge is section-aware: each check below runs against the section named, not the
 whole transcript.
 
-- All four expected audit rows are present in `## Output` (case-insensitive): trailing
-  participial clause, verbatim repetition, container-noun phrase, safety disclaimer
-  opener.
+- All four expected audit rows are present in `## Output` (case-insensitive), matched
+  by concept rather than by our own reference titles: a participial-tail row, a
+  repetition row, a container-noun row, and a disclaimer-opener row.
 - No nominalization row in `## Output` (nominalization is reported-only per spec,
   never a row).
 - The scanner's exact participial-tails count and repetition rate (computed by the
@@ -49,6 +56,16 @@ whole transcript.
 
 `tools/smoke_harnesses.sh` prints one `PASS <harness>`, `FAIL <harness>`, or
 `SKIP <harness> (reason)` line per harness, with reason lines above a FAIL.
+
+The container-noun row is the concept the Codex smoke run previously dropped while
+paraphrasing our reference titles, so its regex now also accepts the scanner's own
+`container_of` hit text on the fixture (`a sense of`, `The weight of`), computed fresh
+from a live scan each run rather than hardcoded, in addition to the word "container"
+itself — a model quoting either satisfies the row. On the 2026-09-14 re-run under this
+change, Codex named the row explicitly ("Abstract container phrases — weak signal"),
+quoting both hits verbatim, and judged PASS alongside Claude Code; a Codex run that
+names only that row incompletely, or omits it, would still FAIL and is a recorded
+outcome, not grounds to loosen the judge further.
 
 ## SKIP on authentication failure
 

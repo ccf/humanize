@@ -6,28 +6,28 @@
   "args": "tests/fixtures/ai_report.txt --audit-only"
 }
 {
-  "command": "cd /Users/ccf/git/humanize/skills/humanize && cat references/principles.md && echo ===== && cat /Users/ccf/git/humanize/tests/fixtures/ai_report.txt && echo ===== && wc -w /Users/ccf/git/humanize/tests/fixtures/ai_report.txt",
+  "command": "cat skills/humanize/references/principles.md && echo ===== && cat tests/fixtures/ai_report.txt && echo ===== && wc -w tests/fixtures/ai_report.txt",
   "description": "Read principles reference and the fixture text"
 }
 {
-  "command": "cd /Users/ccf/git/humanize/skills/humanize && cat /Users/ccf/git/humanize/tests/fixtures/ai_report.txt && printf '\\n----- words: ' && wc -w < /Users/ccf/git/humanize/tests/fixtures/ai_report.txt",
+  "command": "cat tests/fixtures/ai_report.txt; printf '\\n-----\\n'; wc -w tests/fixtures/ai_report.txt",
   "description": "Read the fixture text and count words"
 }
 {
-  "command": "cat references/surface-tells.md",
-  "description": "Read surface-tells reference"
+  "command": "cat skills/humanize/references/surface-tells.md",
+  "description": "Read surface tells reference"
 }
 {
-  "command": "cat references/style-tells.md",
-  "description": "Read style-tells reference"
+  "command": "cat skills/humanize/references/style-tells.md",
+  "description": "Read style tells reference"
 }
 {
-  "command": "python3 scripts/surface_scan.py --text /Users/ccf/git/humanize/tests/fixtures/ai_report.txt",
-  "description": "Run surface scanner on the fixture"
+  "command": "python3 skills/humanize/scripts/surface_scan.py --text tests/fixtures/ai_report.txt",
+  "description": "Run the surface scanner on the fixture"
 }
 {
-  "command": "python3 scripts/surface_scan.py /Users/ccf/git/humanize/tests/fixtures/ai_report.txt | python3 -c \"\nimport json,sys; d=json.load(sys.stdin)\nprint(json.dumps({k:d[k] for k in ('discourse','grammar','repetition','structures')}, indent=1)[:4000])\"",
-  "description": "Pull discourse, grammar, repetition and structure hits from full scan JSON"
+  "command": "python3 skills/humanize/scripts/surface_scan.py tests/fixtures/ai_report.txt | python3 -c \"\nimport json,sys; d=json.load(sys.stdin)\nfor k in ('discourse','grammar','repetition','structures','nominalization'):\n    print(k, json.dumps(d.get(k), indent=1)[:2500]); print()\n\"",
+  "description": "Dump the fired scanner blocks with verbatim hits"
 }
 
 ## Scanner output
@@ -120,7 +120,8 @@ Finance reviewed the quarterly forecast with each product area and found no mate
 
 In summary, delivery across all workstreams and teams stayed on plan despite the schema issue, and the quarter closes with fewer open risks than it opened with. Please raise any concerns before Friday so they can be folded into the planning session.
 
------ words:      620
+-----
+     620 tests/fixtures/ai_report.txt
 # Surface tells
 
 The layer StoryScope does not measure: vocabulary, grammar, punctuation,
@@ -608,145 +609,229 @@ repetition: 3.2/1k · longest repeat 5 · "across all workstreams and teams"×3
 grammar: participial tails 14 (22.6/1k) ", reflecting the late discovery of schema drift in the" · container-of 2 "a sense of"
 sentence tail: over-30 0.0% · p90 25 · longest flat run 8
 nominalization hits: 24 (validation×2, migration×2, implementation×1) · frames: "the implementation of", "the migration of"
-{
- "discourse": {
-  "summary_closer": true,
-  "disclaimer_opener": {
-   "fired": true,
-   "hits": [
-    {
-     "text": "it's important to approach",
-     "sentence": 0
-    },
-    {
-     "text": "i'm not able to",
-     "sentence": 1
-    }
-   ]
-  }
- },
- "grammar": {
-  "participial_tail": {
-   "count": 14,
-   "rate": 22.6,
-   "hits": [
-    {
-     "text": ", reflecting the late discovery of schema drift in the",
-     "sentence": 2
-    },
-    {
-     "text": ", ensuring alignment across teams before any record reaches",
-     "sentence": 3
-    },
-    {
-     "text": ", exceeding the target we set in March",
-     "sentence": 4
-    },
-    {
-     "text": ", creating a sense of momentum that was missing last quarter",
-     "sentence": 5
-    },
-    {
-     "text": ", allowing designers to retire eleven legacy patterns",
-     "sentence": 6
-    },
-    {
-     "text": ", giving on-call staff a clearer signal during incidents",
-     "sentence": 9
-    },
-    {
-     "text": ", matching the level the platform group had proposed",
-     "sentence": 10
-    },
-    {
-     "text": ", resolving most of them within the first business day",
-     "sentence": 11
-    },
-    {
-     "text": ", leaving two senior positions unfilled going into the next",
-     "sentence": 14
-    },
-    {
-     "text": ", assuming the compensation adjustments are approved",
-     "sentence": 16
-    }
-   ]
-  },
-  "container_of": {
-   "count": 2,
-   "hits": [
-    {
-     "text": "a sense of",
-     "sentence": 5
-    },
-    {
-     "text": "The weight of",
-     "sentence": 15
-    }
-   ]
-  }
- },
- "repetition": {
-  "too_short": false,
-  "repeated_phrase_rate": 3.2,
-  "longest_repeat": 5,
-  "phrases": [
+discourse {
+ "summary_closer": true,
+ "disclaimer_opener": {
+  "fired": true,
+  "hits": [
    {
-    "text": "across all workstreams and teams",
-    "count": 3,
-    "sentences": [
-     5,
-     17,
-     32
-    ]
+    "text": "it's important to approach",
+    "sentence": 0
+   },
+   {
+    "text": "i'm not able to",
+    "sentence": 1
    }
   ]
- },
- "structures": {
-  "tricolon": 1,
-  "not_but": 1,
-  "rhetorical_q": 0,
-  "parallel_openers": 0
  }
 }
 
+grammar {
+ "participial_tail": {
+  "count": 14,
+  "rate": 22.6,
+  "hits": [
+   {
+    "text": ", reflecting the late discovery of schema drift in the",
+    "sentence": 2
+   },
+   {
+    "text": ", ensuring alignment across teams before any record reaches",
+    "sentence": 3
+   },
+   {
+    "text": ", exceeding the target we set in March",
+    "sentence": 4
+   },
+   {
+    "text": ", creating a sense of momentum that was missing last quarter",
+    "sentence": 5
+   },
+   {
+    "text": ", allowing designers to retire eleven legacy patterns",
+    "sentence": 6
+   },
+   {
+    "text": ", giving on-call staff a clearer signal during incidents",
+    "sentence": 9
+   },
+   {
+    "text": ", matching the level the platform group had proposed",
+    "sentence": 10
+   },
+   {
+    "text": ", resolving most of them within the first business day",
+    "sentence": 11
+   },
+   {
+    "text": ", leaving two senior positions unfilled going into the next",
+    "sentence": 14
+   },
+   {
+    "text": ", assuming the compensation adjustments are approved",
+    "sentence": 16
+   }
+  ]
+ },
+ "container_of": {
+  "count": 2,
+  "hits": [
+   {
+    "text": "a sense of",
+    "sentence": 5
+   },
+   {
+    "text": "The weight of",
+    "sentence": 15
+   }
+  ]
+ }
+}
+
+repetition {
+ "too_short": false,
+ "repeated_phrase_rate": 3.2,
+ "longest_repeat": 5,
+ "phrases": [
+  {
+   "text": "across all workstreams and teams",
+   "count": 3,
+   "sentences": [
+    5,
+    17,
+    32
+   ]
+  }
+ ]
+}
+
+structures {
+ "tricolon": 1,
+ "not_but": 1,
+ "rhetorical_q": 0,
+ "parallel_openers": 0
+}
+
+nominalization {
+ "count": 24,
+ "hits": [
+  {
+   "text": "validation",
+   "count": 2
+  },
+  {
+   "text": "migration",
+   "count": 2
+  },
+  {
+   "text": "implementation",
+   "count": 1
+  },
+  {
+   "text": "ingestion",
+   "count": 1
+  },
+  {
+   "text": "alignment",
+   "count": 1
+  },
+  {
+   "text": "adoption",
+   "count": 1
+  },
+  {
+   "text": "completion",
+   "count": 1
+  },
+  {
+   "text": "optimization",
+   "count": 1
+  },
+  {
+   "text": "deflection",
+   "count": 1
+  },
+  {
+   "text": "decision",
+   "count": 1
+  },
+  {
+   "text": "compensation",
+   "count": 1
+  },
+  {
+   "text": "adjustments",
+   "count": 1
+  },
+  {
+   "text": "coordination",
+   "count": 1
+  },
+  {
+   "text": "escalation",
+   "count": 1
+  },
+  {
+   "text": "transformation",
+   "count": 1
+  }
+ ],
+ "of_frames": [
+  {
+   "text": "the implementation of",
+   "sentence": 2
+  },
+  {
+   "text": "the migration of",
+   "sentence": 7
+  },
+  {
+   "text": "the completion of",
+   "sentence": 7
+  },
+  {
+   "text": "the optimization of",
+   "sentence": 8
+  },
+  {
+   "text": "the escalation of",
+   "sentence": 18
+  },
+  {
+   "text": "the transformation of",
+   "sentence": 19
+  },
+  {
+   "text": "the remediation of",
+   "sentence": 20
+  },
+  {
+   "text": "the integration of",
+   "sentence": 26
+  }
+ ]
+}
+
 ## Output
-Using the humanize skill to audit the fixture without rewriting.
-Audit only, so I stop after the table. The text is 620 words, classified `expository` (a quarterly status report).
+I'll invoke the humanize skill and run an audit-only pass on the fixture.
+Audit complete. Classified as `expository` (quarterly status report, 620 words, 34 sentences, 12 paragraphs). Scanner ran; the table below covers every block that fired.
 
 | # | Tell | Evidence | Base rate / metric |
 |---|------|----------|--------------------|
-| 1 | Safety disclaimer opener | "It's important to approach this update carefully", "I'm not able to share vendor pricing here, but" (×2, sentences 1–2) | 46% vs 0.2% of responses, per-family range [rudnicka-2026] |
-| 2 | Trailing participial clause | ", ensuring alignment across teams before any record reaches" (×14 in 34 sentences) | scan: 22.6/1k; ratio 5.3×, d = 1.38 [reinhart-2025] |
-| 3 | Verbatim repetition | "across all workstreams and teams" (×3, sentences 6, 18, 33) | scan: longest repeat 5 words; OR 1.47 [jakesch-2023] |
-| 4 | Uniform sentence length | every sentence 14–27 words; longest flat run 8; no sentence over 30 | scan: cv 0.19, over-30 0.0%; rule of thumb human 0.5–0.9; human over-30 31.2% vs AI 17.5–21.0% [munoz-ortiz-2024] |
-| 5 | Uniform paragraph length | 12 paragraphs, all 2–3 sentences | scan: paragraph cv 0.137; rule of thumb below 0.3 is uniform |
-| 6 | Summary closer | "In summary, delivery across all workstreams and teams stayed on plan despite the schema issue" | scan: summary_closer = yes |
-| 7 | Abstract container-noun phrase | "creating a sense of momentum", "The weight of the decision to pause backfills" (×2) | scan: container_of 2; heads from LAMP Table 8 [chakrabarty-2025] |
+| 1 | Trailing participial clause | ", ensuring alignment across teams before any record reaches" (×14) | scan: 14 tails, 22.6/1k; AI 5.3× human, d = 1.38 [reinhart-2025] |
+| 2 | Safety disclaimer opener | "It's important to approach this update carefully" / "I'm not able to share vendor pricing here, but" | scan: fired, 2 hits; 46% vs 0.2% of responses [rudnicka-2026] |
+| 3 | Verbatim repetition | "across all workstreams and teams" (×3, sentences 5, 17, 32) | scan: 3.2/1k, longest repeat 5; OR 1.47 [jakesch-2023] |
+| 4 | Uniform sentence length | every sentence 14–27 words; none over 30 | scan: cv 0.19, over-30 0.0%, flat run 8; rule of thumb: human 0.5–0.9, AI often < 0.4 |
+| 5 | Uniform paragraph length | 12 paragraphs of 2–3 sentences each | scan: paragraph cv 0.137; rule of thumb: < 0.3 across 5+ paragraphs is uniform |
+| 6 | Summary closer | "In summary, delivery across all workstreams and teams stayed on plan…" | scan: summary_closer true |
+| 7 | Abstract container-noun phrase | "a sense of momentum", "The weight of the decision" (×2) | scan: container-of 2; LAMP Table 8 heads, rare in human seed paragraphs [chakrabarty-2025] |
 
-Notes on what did not become a row:
+Notes on what did not make the table:
 
-- **Nominalizations** fired 24 hits with stacked frames such as "the implementation of", "the migration of", "the optimization of", "the remediation of", "the transformation of". In expository prose these are a prompt to look, not a row. Here they are dense enough that a rewrite would unbury several verbs.
-- **Wordlist, hedges, intensifiers, em-dashes, semicolons** all scanned at zero. The one tricolon and the one not-but structure are within normal range for this length.
-- **Style tells** mostly did not fire in a way a status report would not earn. The uniformly earnest, neutral register is native to the genre, so I did not count it as evidence.
+- **Nominalization** is a prompt to look, not a row, in expository prose. The scanner logged 24 hits and eight "the X of" frames ("the implementation of", "the optimization of", "the remediation of"). For a status report this is native register, though eight frames in 620 words is on the heavy side.
+- **Not-X-but-Y** counted 1, but the match is the "I'm not able to… but" opener already covered in row 2.
+- **Tricolon** counted 1, well under the one-per-150-words rule of thumb.
+- Wordlist, hedges, intensifiers, and every punctuation metric came back at zero. Opener diversity is 0.735, above the monotony threshold.
+- No style-layer tell fired with enough evidence to rank. The register is plain report throughout, which a quarterly update earns, so tone and voice were not scored against it.
 
-Strongest signals are the assistant-style disclaimer opening, the participial tails in nearly half the sentences, and the flat sentence and paragraph rhythm. No rewrite was made.
-Audit only, so I stop after the table. The text is 620 words, classified `expository` (a quarterly status report).
-
-| # | Tell | Evidence | Base rate / metric |
-|---|------|----------|--------------------|
-| 1 | Safety disclaimer opener | "It's important to approach this update carefully", "I'm not able to share vendor pricing here, but" (×2, sentences 1–2) | 46% vs 0.2% of responses, per-family range [rudnicka-2026] |
-| 2 | Trailing participial clause | ", ensuring alignment across teams before any record reaches" (×14 in 34 sentences) | scan: 22.6/1k; ratio 5.3×, d = 1.38 [reinhart-2025] |
-| 3 | Verbatim repetition | "across all workstreams and teams" (×3, sentences 6, 18, 33) | scan: longest repeat 5 words; OR 1.47 [jakesch-2023] |
-| 4 | Uniform sentence length | every sentence 14–27 words; longest flat run 8; no sentence over 30 | scan: cv 0.19, over-30 0.0%; rule of thumb human 0.5–0.9; human over-30 31.2% vs AI 17.5–21.0% [munoz-ortiz-2024] |
-| 5 | Uniform paragraph length | 12 paragraphs, all 2–3 sentences | scan: paragraph cv 0.137; rule of thumb below 0.3 is uniform |
-| 6 | Summary closer | "In summary, delivery across all workstreams and teams stayed on plan despite the schema issue" | scan: summary_closer = yes |
-| 7 | Abstract container-noun phrase | "creating a sense of momentum", "The weight of the decision to pause backfills" (×2) | scan: container_of 2; heads from LAMP Table 8 [chakrabarty-2025] |
-
-Notes on what did not become a row:
-
-- **Nominalizations** fired 24 hits with stacked frames such as "the implementation of", "the migration of", "the optimization of", "the remediation of", "the transformation of". In expository prose these are a prompt to look, not a row. Here they are dense enough that a rewrite would unbury several verbs.
-- **Wordlist, hedges, intensifiers, em-dashes, semicolons** all scanned at zero. The one tricolon and the one not-but structure are within normal range for this length.
-- **Style tells** mostly did not fire in a way a status report would not earn. The uniformly earnest, neutral register is native to the genre, so I did not count it as evidence.
-
-Strongest signals are the assistant-style disclaimer opening, the participial tails in nearly half the sentences, and the flat sentence and paragraph rhythm. No rewrite was made.
+Stopped after the audit as requested. No rewrite produced.

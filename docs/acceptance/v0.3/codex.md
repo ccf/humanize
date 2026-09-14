@@ -1,8 +1,8 @@
 # Codex
 
 ## Tool calls
-/bin/zsh -lc 'python3 scripts/surface_scan.py --text /var/folders/fh/cczgqw9n4r97y43bbgz9py5w0000gn/T/tmp.ODqhB1vxyV/ai_report.txt'
-/bin/zsh -lc 'python3 scripts/surface_scan.py /var/folders/fh/cczgqw9n4r97y43bbgz9py5w0000gn/T/tmp.ODqhB1vxyV/ai_report.txt'
+/bin/zsh -lc 'python3 .agents/skills/humanize/scripts/surface_scan.py --text ai_report.txt'
+/bin/zsh -lc 'python3 .agents/skills/humanize/scripts/surface_scan.py ai_report.txt'
 
 ## Scanner output
 words 620 · sentences 34 · paragraphs 12
@@ -273,24 +273,26 @@ nominalization hits: 24 (validation×2, migration×2, implementation×1) · fram
 
 
 ## Output
-I’ll use the humanize skill to audit `ai_report.txt` and leave the file unchanged.
-Audited `ai_report.txt` as **expository prose** (620 words). File unchanged. These are style observations, not proof of AI authorship.
+I’ll read the humanize skill and audit `ai_report.txt` without changing it.
+Audited `ai_report.txt` as **expository prose**. No changes made. These are stylistic findings, not proof of AI authorship.
 
 | # | Tell | Evidence | Base rate / metric |
 |---|------|----------|--------------------|
-| 1 | Repeated participial endings | “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns” | Scanner flags 14 tails, or 22.6 per 1,000 words. The ingestion paragraph uses this ending in all three sentences—noticeable even for a report. |
-| 2 | Verbatim repetition | “across all workstreams and teams” (×3) | Same five-word phrase repeated in three separate paragraphs; generic wording rather than necessary technical terminology. |
-| 3 | Uniform paragraph length | Paragraphs beginning “Adoption of the shared design system” and “On the reliability side” both follow the same three-sentence format. | All 12 paragraphs contain 2–3 sentences; paragraph-length CV 0.137. Skill heuristic: below 0.3 across ≥5 paragraphs is uniform. |
-| 4 | Uniform sentence length | “The compliance team confirmed that the evidence collection process now runs automatically each week.” | All 34 sentences fall between 14 and 27 words; sentence-length CV 0.19. Skill heuristic flags below 0.4, though report writing can legitimately be this steady. |
-| 5 | Disclaimer opener | “It's important to approach this update carefully” | Scanner flags two disclaimer phrases in the opening. The general caution delays the update; the vendor-pricing restriction may have a legitimate purpose. |
-| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” | `summary_closer: true`. Repeats the opening’s reassuring assessment; the following Friday deadline adds useful information. |
-Audited `ai_report.txt` as **expository prose** (620 words). File unchanged. These are style observations, not proof of AI authorship.
+| 1 | Verbatim repetition | “across all workstreams and teams” (×3), without an apparent rhetorical purpose. | Same five-word phrase repeated three times. |
+| 2 | Repeated participial tails | “, ensuring alignment across teams before any record reaches”; “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns”. The repeated construction makes results sound mechanically appended. | Scanner: 14 hits; 22.6 per 1,000 words. Legitimate in reports, but conspicuous at this density. |
+| 3 | Uniform sentence length | “Two departments asked for a shorter reporting cycle, and that request is under review.” Nearly every sentence has a similar medium-length cadence. | 34 sentences; range 14–27 words; coefficient of variation (CV) 0.19. Skill heuristic flags CV below 0.4 as unusually flat. |
+| 4 | Uniform paragraph length | The paragraph beginning “On the reliability side” follows the same three-sentence shape as nearly every substantive update. | All 12 paragraphs contain 2–3 sentences; paragraph CV 0.137, below the skill’s 0.3 uniformity heuristic. |
+| 5 | Disclaimer opener | “It's important to approach” and “I'm not able to” delay the substantive update. The vendor-pricing restriction may have a real purpose; the cautionary lead-in is generic. | Scanner: disclaimer opener fired, with two matching phrases. |
+| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” repeats the broad reassurance. “Stayed on plan” also needs reconciling with the reported two-week delay. | Scanner: summary closer detected. |
+| 7 | Abstract container phrases — weak signal | “a sense of” momentum; “The weight of” the decision. These make the account less concrete, but are ordinary report language at this frequency. | Scanner: 2 container-noun hits; insufficient density to treat as a strong tell. |
+Audited `ai_report.txt` as **expository prose**. No changes made. These are stylistic findings, not proof of AI authorship.
 
 | # | Tell | Evidence | Base rate / metric |
 |---|------|----------|--------------------|
-| 1 | Repeated participial endings | “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns” | Scanner flags 14 tails, or 22.6 per 1,000 words. The ingestion paragraph uses this ending in all three sentences—noticeable even for a report. |
-| 2 | Verbatim repetition | “across all workstreams and teams” (×3) | Same five-word phrase repeated in three separate paragraphs; generic wording rather than necessary technical terminology. |
-| 3 | Uniform paragraph length | Paragraphs beginning “Adoption of the shared design system” and “On the reliability side” both follow the same three-sentence format. | All 12 paragraphs contain 2–3 sentences; paragraph-length CV 0.137. Skill heuristic: below 0.3 across ≥5 paragraphs is uniform. |
-| 4 | Uniform sentence length | “The compliance team confirmed that the evidence collection process now runs automatically each week.” | All 34 sentences fall between 14 and 27 words; sentence-length CV 0.19. Skill heuristic flags below 0.4, though report writing can legitimately be this steady. |
-| 5 | Disclaimer opener | “It's important to approach this update carefully” | Scanner flags two disclaimer phrases in the opening. The general caution delays the update; the vendor-pricing restriction may have a legitimate purpose. |
-| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” | `summary_closer: true`. Repeats the opening’s reassuring assessment; the following Friday deadline adds useful information. |
+| 1 | Verbatim repetition | “across all workstreams and teams” (×3), without an apparent rhetorical purpose. | Same five-word phrase repeated three times. |
+| 2 | Repeated participial tails | “, ensuring alignment across teams before any record reaches”; “, exceeding the target we set in March”; “, allowing designers to retire eleven legacy patterns”. The repeated construction makes results sound mechanically appended. | Scanner: 14 hits; 22.6 per 1,000 words. Legitimate in reports, but conspicuous at this density. |
+| 3 | Uniform sentence length | “Two departments asked for a shorter reporting cycle, and that request is under review.” Nearly every sentence has a similar medium-length cadence. | 34 sentences; range 14–27 words; coefficient of variation (CV) 0.19. Skill heuristic flags CV below 0.4 as unusually flat. |
+| 4 | Uniform paragraph length | The paragraph beginning “On the reliability side” follows the same three-sentence shape as nearly every substantive update. | All 12 paragraphs contain 2–3 sentences; paragraph CV 0.137, below the skill’s 0.3 uniformity heuristic. |
+| 5 | Disclaimer opener | “It's important to approach” and “I'm not able to” delay the substantive update. The vendor-pricing restriction may have a real purpose; the cautionary lead-in is generic. | Scanner: disclaimer opener fired, with two matching phrases. |
+| 6 | Summary closer | “In summary, delivery across all workstreams and teams stayed on plan” repeats the broad reassurance. “Stayed on plan” also needs reconciling with the reported two-week delay. | Scanner: summary closer detected. |
+| 7 | Abstract container phrases — weak signal | “a sense of” momentum; “The weight of” the decision. These make the account less concrete, but are ordinary report language at this frequency. | Scanner: 2 container-noun hits; insufficient density to treat as a strong tell. |
